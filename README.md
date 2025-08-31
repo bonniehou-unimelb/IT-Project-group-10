@@ -2,6 +2,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+**Make sure you have [Node.js and npm](https://nodejs.org/) installed before running the development server.**
+
 First, run the development server:
 
 ```bash
@@ -15,6 +17,8 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+Once you have confirmed the server is working, stop it by pressing `Ctrl+C` in the terminal before proceeding to backend setup.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

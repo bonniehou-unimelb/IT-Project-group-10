@@ -4,9 +4,10 @@
     "pk": 1,
     "fields": {
       "role": "STUDENT",
-      "email": "alicebarn@student.unimelb.edu.au",
-      "firstName": "Alice",
-      "lastName": "Barn"
+      "username": "alicebarn@student.unimelb.edu.au",
+      "first_name": "Alice",
+      "last_name": "Barn",
+      "password":"12345678"
     }
   },
   {
@@ -14,9 +15,10 @@
     "pk": 2,
     "fields": {
       "role": "COORDINATOR",
-      "email": "benconnor@unimelb.edu.au",
-      "firstName": "Ben",
-      "lastName": "Connor"
+      "username": "benconnor@unimelb.edu.au",
+      "first_name": "Ben",
+      "last_name": "Connor",
+      "password":"12345678"
     }
   },
   {
@@ -24,9 +26,10 @@
     "pk": 3,
     "fields": {
       "role": "STAFF",
-      "email": "charliedan@unimelb.edu.au",
-      "firstName": "Charlie",
-      "lastName": "Dan"
+      "username": "charliedan@unimelb.edu.au",
+      "first_name": "Charlie",
+      "last_name": "Dan",
+      "password":"12345678"
     }
   },
   {
@@ -34,9 +37,10 @@
     "pk": 4,
     "fields": {
       "role": "STUDENT",
-      "email": "daniellesmith@student.unimelb.edu.au",
-      "firstName": "Danielle",
-      "lastName": "Smith"
+      "username": "daniellesmith@student.unimelb.edu.au",
+      "first_name": "Danielle",
+      "last_name": "Smith",
+      "password":"12345678"
     }
   },
 

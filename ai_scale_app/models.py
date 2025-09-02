@@ -1,6 +1,24 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
-class User(models.Model):
+# class User(models.Model):
+#     class Role(models.TextChoices):
+#         STUDENT = "STUDENT", "Student"
+#         STAFF = "STAFF", "Staff"
+#         COORDINATOR = "COORDINATOR", "Coordinator"
+#         ADMIN = "ADMIN", "Admin"
+
+#     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT)
+#     email = models.EmailField(unique=True)
+#     firstName = models.CharField(max_length=50)
+#     lastName = models.CharField(max_length=50)
+#     password = models.CharField(max_length=100, blank=True, default="")
+
+#     def __str__(self):
+#         return f"{self.firstName} {self.lastName}: {self.email} is a {self.role}"
+
+
+class User(AbstractUser):
     class Role(models.TextChoices):
         STUDENT = "STUDENT", "Student"
         STAFF = "STAFF", "Staff"
@@ -8,13 +26,6 @@ class User(models.Model):
         ADMIN = "ADMIN", "Admin"
 
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT)
-    email = models.EmailField(unique=True)
-    firstName = models.CharField(max_length=50)
-    lastName = models.CharField(max_length=50)
-
-    def __str__(self):
-        return f"{self.firstName} {self.lastName}: {self.email} is a {self.role}"
-
 
 class Subject(models.Model):
     coordinatorId = models.ForeignKey(User, on_delete=models.CASCADE)

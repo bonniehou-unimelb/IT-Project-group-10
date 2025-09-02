@@ -13,7 +13,7 @@ class User(models.Model):
     lastName = models.CharField(max_length=50)
 
     def __str__(self):
-        return f"{self.firstName} {self.lastName}: {self.email}"
+        return f"{self.firstName} {self.lastName}: {self.email} is a {self.role}"
 
 
 class Subject(models.Model):

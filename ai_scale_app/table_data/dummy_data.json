@@ -1,0 +1,252 @@
+[
+  {
+    "model": "ai_scale_app.user",
+    "pk": 1,
+    "fields": {
+      "role": "STUDENT",
+      "username": "alicebarn@student.unimelb.edu.au",
+      "first_name": "Alice",
+      "last_name": "Barn",
+      "password":"12345678"
+    }
+  },
+  {
+    "model": "ai_scale_app.user",
+    "pk": 2,
+    "fields": {
+      "role": "COORDINATOR",
+      "username": "benconnor@unimelb.edu.au",
+      "first_name": "Ben",
+      "last_name": "Connor",
+      "password":"12345678"
+    }
+  },
+  {
+    "model": "ai_scale_app.user",
+    "pk": 3,
+    "fields": {
+      "role": "STAFF",
+      "username": "charliedan@unimelb.edu.au",
+      "first_name": "Charlie",
+      "last_name": "Dan",
+      "password":"12345678"
+    }
+  },
+  {
+    "model": "ai_scale_app.user",
+    "pk": 4,
+    "fields": {
+      "role": "STUDENT",
+      "username": "daniellesmith@student.unimelb.edu.au",
+      "first_name": "Danielle",
+      "last_name": "Smith",
+      "password":"12345678"
+    }
+  },
+
+  {
+    "model": "ai_scale_app.subject",
+    "pk": 1,
+    "fields": {
+      "coordinatorId": 2,
+      "name": "Foundations of Computing",
+      "subjectCode": "COMP10001"
+    }
+  },
+  {
+    "model": "ai_scale_app.subject",
+    "pk": 2,
+    "fields": {
+      "coordinatorId": 2,
+      "name": "IT Project",
+      "subjectCode": "COMP30022"
+    }
+  },
+
+  {
+    "model": "ai_scale_app.enrolment",
+    "pk": 1,
+    "fields": {
+      "subjectId": 1,
+      "studentId": 1
+    }
+  },
+  {
+    "model": "ai_scale_app.enrolment",
+    "pk": 2,
+    "fields": {
+      "subjectId": 2,
+      "studentId": 1
+    }
+  },
+  {
+    "model": "ai_scale_app.enrolment",
+    "pk": 3,
+    "fields": {
+      "subjectId": 1,
+      "studentId": 4
+    }
+  },
+
+  {
+    "model": "ai_scale_app.template",
+    "pk": 1,
+    "fields": {
+      "ownerId": 2,
+      "name": "Student Group Project AI Use Template",
+      "scope": "Undergraduate FEIT",
+      "description": "Outlines acceptable forms of AI use during coding, documentation, progress reports and etc."
+    }
+  },
+  {
+    "model": "ai_scale_app.template",
+    "pk": 2,
+    "fields": {
+      "ownerId": 2,
+      "name": "Code Assignment AI Use Template",
+      "scope": "Undergraduate FEIT",
+      "description": "Outlines acceptable forms of AI use during individual and group coding tasks."
+    }
+  },
+
+  {
+    "model": "ai_scale_app.templateownership",
+    "pk": 1,
+    "fields": {
+      "templateId": 1,
+      "ownerId": 2
+    }
+  },
+  {
+    "model": "ai_scale_app.templateownership",
+    "pk": 2,
+    "fields": {
+      "templateId": 1,
+      "ownerId": 3
+    }
+  },
+  {
+    "model": "ai_scale_app.templateownership",
+    "pk": 3,
+    "fields": {
+      "templateId": 2,
+      "ownerId": 2
+    }
+  },
+
+  {
+    "model": "ai_scale_app.templateitem",
+    "pk": 1,
+    "fields": {
+      "templateId": 1,
+      "task": "General learning purposes",
+      "aiUseScaleLevel": "AI for general learning (not assessment-oriented)",
+      "instructionsToStudents": "Use AI for general learning only (definitions, examples, revision aids). Do not ask AI to analyze your specific assessment case.",
+      "examples": "Scenario 1: You are new to the idea of \\\"core competence.\\\" You ask an AI, \\\"Can you explain the business concept of core competence and what makes it different from just being good at something?\\\" YES - This is the ideal use of AI for general learning. You are asking for a definition and clarification of a key subject concept without any link to the specific assessment case. Scenario 2: After learning about Porter's Five Forces, you ask an AI, \\\"Can you give me an example of how Porter's Five Forces can be applied to a generic industry, like the fast-food industry or the airline industry?\\\" YES - You are asking for a general example to deepen your understanding. Since you are not asking the AI to apply the framework to your specific case study, this is perfectly acceptable. Scenario 3: You want to test your knowledge. You ask an AI, \\\"Create a short multiple-choice quiz for me on the key components of Porter's Five Forces.\\\" YES - Using AI to create revision quizzes or flashcards on general topics is an excellent study strategy and is explicitly permitted by the guidelines.",
+      "aiGeneratedContent": "NA",
+      "useAcknowledgement": false
+    }
+  },
+  {
+    "model": "ai_scale_app.templateitem",
+    "pk": 2,
+    "fields": {
+      "templateId": 1,
+      "task": "Research the case context",
+      "aiUseScaleLevel": "AI-Assisted Contextual Research",
+      "instructionsToStudents": "For your case study analysis, you may use AI tools only for: - Understanding the broad context, such as the industry overview and general background information related to your case study.",
+      "examples": "Scenario 1: You are researching the telecommunications industry. You ask an AI, \\\"Can you give me an overview of the telecommunications industry in Australia?\\\" (assuming your case is about this). YES - This is a good example of using AI for background research. You are learning about the industry context, not asking the AI to analyze the industry or specific case. Scenario 2: You are researching the coffee market. You ask the AI, \\\"Can you analyse the Australian specialty coffee market using Porter's Five Forces?\\\" (assuming your case is about the coffee market). NO - Even though you are not directly asking the AI to analyze the company in the case, you are asking it to do analytical work for the case's specific industry context. This crosses the line from context research into assessment-specific analysis. Scenario 3: You upload the entire case study document to an AI and ask, \\\"Can you identify the top three most important issues in this case?\\\" NO - This asks the AI to perform the core task of analysis and issue identification, which is explicitly forbidden. You must read and interpret the case yourself.",
+      "aiGeneratedContent": "The report must not contain any AI-generated content.",
+      "useAcknowledgement": true
+    }
+  },
+  {
+    "model": "ai_scale_app.templateitem",
+    "pk": 3,
+    "fields": {
+      "templateId": 1,
+      "task": "Read and understand the case",
+      "aiUseScaleLevel": "No AI",
+      "instructionsToStudents": "No AI use for this task is allowed.",
+      "examples": "NA",
+      "aiGeneratedContent": "NA",
+      "useAcknowledgement": false
+    }
+  },
+  {
+    "model": "ai_scale_app.templateitem",
+    "pk": 4,
+    "fields": {
+      "templateId": 2,
+      "task": "Open ended coding tasks",
+      "aiUseScaleLevel": "No AI",
+      "instructionsToStudents": "No AI use for this task is allowed.",
+      "examples": "NA",
+      "aiGeneratedContent": "NA",
+      "useAcknowledgement": false
+    }
+  },
+
+  {
+    "model": "ai_scale_app.rubric",
+    "pk": 1,
+    "fields": {
+      "ownerId": 2,
+      "name": "Coding AI use in Assignment 1",
+      "description": "Updated AI use scale for Semester 2 2025",
+      "scope": "Undergrad FEIT",
+      "creationDate": "2025-09-02T03:00:00Z"
+    }
+  },
+  {
+    "model": "ai_scale_app.rubric",
+    "pk": 2,
+    "fields": {
+      "ownerId": 2,
+      "name": "Coding AI use in Assignment 2",
+      "description": "AI use scale for Semester 2 2025",
+      "scope": "Undergrad FEIT",
+      "creationDate": "2025-09-02T03:05:00Z"
+    }
+  },
+
+  {
+    "model": "ai_scale_app.rubricitem",
+    "pk": 1,
+    "fields": {
+      "rubricId": 1,
+      "task": "Close ended coding tasks",
+      "aiUseScaleLevel": "No AI",
+      "instructionsToStudents": "No AI use for this task is allowed.",
+      "examples": "NA",
+      "aiGeneratedContent": "NA",
+      "useAcknowledgement": false
+    }
+  },
+  {
+    "model": "ai_scale_app.rubricitem",
+    "pk": 2,
+    "fields": {
+      "rubricId": 1,
+      "task": "Open ended coding tasks",
+      "aiUseScaleLevel": "No AI",
+      "instructionsToStudents": "No AI use for this task is allowed.",
+      "examples": "NA",
+      "aiGeneratedContent": "NA",
+      "useAcknowledgement": false
+    }
+  },
+  {
+    "model": "ai_scale_app.rubricitem",
+    "pk": 3,
+    "fields": {
+      "rubricId": 2,
+      "task": "Understanding project context",
+      "aiUseScaleLevel": "AI-assisted contextual research",
+      "instructionsToStudents": "Only for broad context understanding such as for general industry overview.",
+      "examples": "Scenario: You are researching the coffee market. You ask the AI, \\\"Can you analyse the Australian specialty coffee market using Porter's Five Forces?\\\" (assuming your case is about the coffee market). NO - Even though you are not directly asking the AI to analyze the company in the case, you are asking it to do analytical work for the case's specific industry context. This crosses the line from context research into assessment-specific analysis.",
+      "aiGeneratedContent": "The report must not contain any AI-generated content.",
+      "useAcknowledgement": true
+    }
+  }
+]

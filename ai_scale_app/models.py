@@ -101,6 +101,7 @@ class Rubric(models.Model):
     description = models.TextField(blank=True, null=True)
     scope = models.CharField(max_length=120, blank=True, null=True)
     creationDate = models.DateTimeField(auto_now_add=True)
+    isFinished = models.BooleanField(blank=True, null=True)
 
     class Meta:
         unique_together = [("ownerId", "name")]

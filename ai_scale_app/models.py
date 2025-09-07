@@ -79,6 +79,38 @@ class TemplateOwnership(models.Model):
     def __str__(self):
         return f"{self.ownerId} owns {self.templateId}"
 
+class AIUseScale(models.Model):
+    class Code(models.TextChoices):
+        N  = "N",  "Level N"
+        R1 = "R1", "Level R1"
+        R2 = "R2", "Level R2"
+        G  = "G",  "Level G"
+
+    code  = models.CharField(max_length=3, choices=Code.choices, unique=True)
+    title = models.CharField(max_length=120)                
+
+    instructions = models.TextField(blank=True)          
+
+    acknowledgement_required = models.BooleanField(default=False)
+    acknowledgement_text     = models.TextField(blank=True)
+    acknowledgement_url      = models.URLField(blank=True)
+
+    position = models.PositiveSmallIntegerField(default=0)  
+    color    = models.CharField(max_length=7, blank=True, help_text="Optional hex (e.g., #FF6B6B)")
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering  = ["position", "code"]
+        indexes   = [models.Index(fields=["code"])]
+        verbose_name = "AI Use Scale"
+        verbose_name_plural = "AI Use Scales"
+
+    def __str__(self):
+        return f"{self.get_code_display()} — {self.title}"  
+
+
+
 
 class TemplateItem(models.Model):
     templateId = models.ForeignKey(Template, on_delete=models.CASCADE)

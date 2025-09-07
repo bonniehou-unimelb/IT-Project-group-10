@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+const API_BACKEND_URL = "http://localhost:8000";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -8,23 +10,45 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    setTimeout(() => {
-      if (email === "lol" && password === "enda") {
-        console.log("Login successful");
-        // TODO: redirect to dashboard
-      } else if (email && password) {
-        setError("Invalid Email or Password");
-      }
-      setIsLoading(false);
-    }, 1500);
+    //Attempt API login call to backend server with login details
+    try {
+      const auth_result = await fetch(`${API_BACKEND_URL}/auth/login/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          username: email, 
+          password: password,
+        }),
+      });
 
-    console.log("Form Submitted", { email, password });
+      const data = await auth_result.json().catch(() => ({}));
+
+      if (!auth_result.ok || !data.success){
+        console.log("Log in attempt failed");
+        setError("Log in attempt failed");
+        setIsLoading(false);
+        return ;
+      } else {
+        console.log("Log in successful");
+        //Redirect logged in user to their dashboard
+        // TO DO: redirect according to their user role
+        router.push("/dashboard");
+      }
+    } catch (err){
+      console.log("Server error");
+      setError("Server error");
+      setIsLoading(false);
+    }
   };
 
   return (

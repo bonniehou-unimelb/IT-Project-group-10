@@ -73,8 +73,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "api.wsgi.application"
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]  # React frontend App
-CSRF_TRUSTED_ORIGINS = ["http://localhost:5173"]
+CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]  # React frontend App
+CSRF_TRUSTED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
 CORS_ALLOW_CREDENTIALS = True
 SESSION_COOKIE_SAMESITE = "Lax"   
 SESSION_COOKIE_SECURE = False     

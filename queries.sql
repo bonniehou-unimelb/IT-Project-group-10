@@ -1,4 +1,3 @@
--- count the number of students in the course
 SELECT s.subjectCode, s.name, COUNT(e.id) AS studentCount
 FROM ai_scale_app_subject s
 LEFT JOIN ai_scale_app_enrolment e ON e.subjectId_id = s.id

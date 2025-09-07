@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from ai_scale_app.models import AIUseScale
+
 
 # class User(models.Model):
 #     class Role(models.TextChoices):

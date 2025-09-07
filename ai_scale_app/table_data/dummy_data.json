@@ -43,6 +43,17 @@
       "password":"12345678"
     }
   },
+  {
+    "model": "ai_scale_app.user",
+    "pk": 5,
+    "fields": {
+      "role": "STUDENT",
+      "username": "emilyjones@student.unimelb.edu.au",
+      "first_name": "Emily",
+      "last_name": "Jones",
+      "password":"12345678"
+    }
+  },
 
   {
     "model": "ai_scale_app.subject",
@@ -60,6 +71,33 @@
       "coordinatorId": 2,
       "name": "IT Project",
       "subjectCode": "COMP30022"
+    }
+  },
+  {
+    "model": "ai_scale_app.subject",
+    "pk": 3,
+    "fields": {
+      "coordinatorId": 2,
+      "name": "Database Systems",
+      "subjectCode": "COMP20008"
+    }
+  },
+  {
+    "model": "ai_scale_app.subject",
+    "pk": 4,
+    "fields": {
+      "coordinatorId": 3,
+      "name": "Principles of Finance",
+      "subjectCode": "FNCE10002"
+    }
+  },
+  {
+    "model": "ai_scale_app.subject",
+    "pk": 5,
+    "fields": {
+      "coordinatorId": 3,
+      "name": "Competition and Strategy",
+      "subjectCode": "ECON20005"
     }
   },
 
@@ -87,6 +125,22 @@
       "studentId": 4
     }
   },
+  {
+    "model": "ai_scale_app.enrolment",
+    "pk": 4,
+    "fields": {
+      "subjectId": 2,
+      "studentId": 4
+    }
+  },
+  {
+    "model": "ai_scale_app.enrolment",
+    "pk": 5,
+    "fields": {
+      "subjectId": 3,
+      "studentId": 5
+    }
+  },
 
   {
     "model": "ai_scale_app.template",
@@ -106,6 +160,36 @@
       "name": "Code Assignment AI Use Template",
       "scope": "Undergraduate FEIT",
       "description": "Outlines acceptable forms of AI use during individual and group coding tasks."
+    }
+  },
+  {
+    "model": "ai_scale_app.template",
+    "pk": 3,
+    "fields": {
+      "ownerId": 3,
+      "name": "Research Report AI Use Template",
+      "scope": "Undergraduate FEIT",
+      "description": "Guidelines for AI use in research reports"
+    }
+  },
+  {
+    "model": "ai_scale_app.template",
+    "pk": 4,
+    "fields": {
+      "ownerId": 2,
+      "name": "Database Project AI Use Template",
+      "scope": "Undergraduate FEIT",
+      "description": "AI use guidelines for database projects"
+    }
+  },
+  {
+    "model": "ai_scale_app.template",
+    "pk": 5,
+    "fields": {
+      "ownerId": 3,
+      "name": "Web Development AI Use Template",
+      "scope": "Undergraduate FEIT",
+      "description": "AI use guidelines for web development tasks"
     }
   },
 
@@ -131,6 +215,22 @@
     "fields": {
       "templateId": 2,
       "ownerId": 2
+    }
+  },
+  {
+    "model": "ai_scale_app.templateownership",
+    "pk": 4,
+    "fields": {
+      "templateId": 3,
+      "ownerId": 2
+    }
+  },
+  {
+    "model": "ai_scale_app.templateownership",
+    "pk": 5,
+    "fields": {
+      "templateId": 4,
+      "ownerId": 3
     }
   },
 
@@ -186,6 +286,19 @@
       "useAcknowledgement": false
     }
   },
+  {
+    "model": "ai_scale_app.templateitem",
+    "pk": 5,
+    "fields": {
+      "templateId": 3,
+      "task": "Literature Review",
+      "aiUseScaleLevel": "AI-Assisted Research",
+      "instructionsToStudents": "AI can be used for finding relevant papers and summarizing general concepts",
+      "examples": "Example scenarios of appropriate AI use in literature review",
+      "aiGeneratedContent": "Must be properly cited",
+      "useAcknowledgement": true
+    }
+  },
 
   {
     "model": "ai_scale_app.rubric",
@@ -207,6 +320,39 @@
       "description": "AI use scale for Semester 2 2025",
       "scope": "Undergrad FEIT",
       "creationDate": "2025-09-02T03:05:00Z"
+    }
+  },
+  {
+    "model": "ai_scale_app.rubric",
+    "pk": 3,
+    "fields": {
+      "ownerId": 2,
+      "name": "Research Report Rubric",
+      "description": "AI use guidelines for research reports",
+      "scope": "Undergrad FEIT",
+      "creationDate": "2025-09-02T03:10:00Z"
+    }
+  },
+  {
+    "model": "ai_scale_app.rubric",
+    "pk": 4,
+    "fields": {
+      "ownerId": 3,
+      "name": "Database Project Rubric",
+      "description": "AI use guidelines for database projects",
+      "scope": "Undergrad FEIT",
+      "creationDate": "2025-09-02T03:15:00Z"
+    }
+  },
+  {
+    "model": "ai_scale_app.rubric",
+    "pk": 5,
+    "fields": {
+      "ownerId": 3,
+      "name": "Web Development Rubric",
+      "description": "AI use guidelines for web development",
+      "scope": "Undergrad FEIT",
+      "creationDate": "2025-09-02T03:20:00Z"
     }
   },
 
@@ -247,6 +393,190 @@
       "examples": "Scenario: You are researching the coffee market. You ask the AI, \\\"Can you analyse the Australian specialty coffee market using Porter's Five Forces?\\\" (assuming your case is about the coffee market). NO - Even though you are not directly asking the AI to analyze the company in the case, you are asking it to do analytical work for the case's specific industry context. This crosses the line from context research into assessment-specific analysis.",
       "aiGeneratedContent": "The report must not contain any AI-generated content.",
       "useAcknowledgement": true
+    }
+  },
+  {
+    "model": "ai_scale_app.rubricitem",
+    "pk": 4,
+    "fields": {
+      "rubricId": 2,
+      "task": "Database Design",
+      "aiUseScaleLevel": "AI-Assisted Learning",
+      "instructionsToStudents": "AI can be used for learning database concepts only",
+      "examples": "Examples of appropriate AI use in database design",
+      "aiGeneratedContent": "No AI-generated schemas allowed",
+      "useAcknowledgement": true
+    }
+  },
+  {
+    "model": "ai_scale_app.rubricitem",
+    "pk": 5,
+    "fields": {
+      "rubricId": 3,
+      "task": "Web Development",
+      "aiUseScaleLevel": "AI-Assisted Coding",
+      "instructionsToStudents": "AI can be used for code suggestions and debugging",
+      "examples": "Examples of appropriate AI use in web development",
+      "aiGeneratedContent": "Must be reviewed and modified",
+      "useAcknowledgement": true
+    }
+  },
+
+  {
+    "model": "ai_scale_app.assignment",
+    "pk": 1,
+    "fields": {
+      "subjectId": 1,
+      "name": "Project 1",
+      "dueDate": "2025-10-15T23:59:59Z",
+      "rubricId": 1,
+      "description": "First programming assignment"
+    }
+  },
+  {
+    "model": "ai_scale_app.assignment",
+    "pk": 2,
+    "fields": {
+      "subjectId": 1,
+      "name": "Project 2",
+      "dueDate": "2025-11-15T23:59:59Z",
+      "rubricId": 2,
+      "description": "Second programming assignment"
+    }
+  },
+  {
+    "model": "ai_scale_app.assignment",
+    "pk": 3,
+    "fields": {
+      "subjectId": 2,
+      "name": "Research Paper",
+      "dueDate": "2025-10-30T23:59:59Z",
+      "rubricId": 3,
+      "description": "Research paper on AI ethics"
+    }
+  },
+  {
+    "model": "ai_scale_app.assignment",
+    "pk": 4,
+    "fields": {
+      "subjectId": 3,
+      "name": "Database Project",
+      "dueDate": "2025-11-01T23:59:59Z",
+      "rubricId": 4,
+      "description": "Design and implement a database system"
+    }
+  },
+  {
+    "model": "ai_scale_app.assignment",
+    "pk": 5,
+    "fields": {
+      "subjectId": 4,
+      "name": "Web App Project",
+      "dueDate": "2025-11-30T23:59:59Z",
+      "rubricId": 5,
+      "description": "Develop a web application"
+    }
+  },
+
+  {
+    "model": "ai_scale_app.submission",
+    "pk": 1,
+    "fields": {
+      "assignmentId": 1,
+      "studentId": 1,
+      "submissionDate": "2025-10-14T22:30:00Z",
+      "status": "SUBMITTED"
+    }
+  },
+  {
+    "model": "ai_scale_app.submission",
+    "pk": 2,
+    "fields": {
+      "assignmentId": 1,
+      "studentId": 4,
+      "submissionDate": "2025-10-15T20:15:00Z",
+      "status": "SUBMITTED"
+    }
+  },
+  {
+    "model": "ai_scale_app.submission",
+    "pk": 3,
+    "fields": {
+      "assignmentId": 2,
+      "studentId": 1,
+      "submissionDate": "2025-11-14T21:45:00Z",
+      "status": "SUBMITTED"
+    }
+  },
+  {
+    "model": "ai_scale_app.submission",
+    "pk": 4,
+    "fields": {
+      "assignmentId": 2,
+      "studentId": 4,
+      "submissionDate": "2025-11-15T19:30:00Z",
+      "status": "SUBMITTED"
+    }
+  },
+  {
+    "model": "ai_scale_app.submission",
+    "pk": 5,
+    "fields": {
+      "assignmentId": 3,
+      "studentId": 5,
+      "submissionDate": "2025-10-29T23:00:00Z",
+      "status": "SUBMITTED"
+    }
+  },
+
+  {
+    "model": "ai_scale_app.comment",
+    "pk": 1,
+    "fields": {
+      "submissionId": 1,
+      "commenterId": 2,
+      "content": "Good use of AI acknowledgement",
+      "timestamp": "2025-10-16T10:00:00Z"
+    }
+  },
+  {
+    "model": "ai_scale_app.comment",
+    "pk": 2,
+    "fields": {
+      "submissionId": 1,
+      "commenterId": 3,
+      "content": "Clear documentation of AI tools used",
+      "timestamp": "2025-10-16T11:30:00Z"
+    }
+  },
+  {
+    "model": "ai_scale_app.comment",
+    "pk": 3,
+    "fields": {
+      "submissionId": 2,
+      "commenterId": 2,
+      "content": "Please provide more details about AI usage",
+      "timestamp": "2025-10-17T09:15:00Z"
+    }
+  },
+  {
+    "model": "ai_scale_app.comment",
+    "pk": 4,
+    "fields": {
+      "submissionId": 3,
+      "commenterId": 3,
+      "content": "Well-documented AI assistance",
+      "timestamp": "2025-11-16T14:20:00Z"
+    }
+  },
+  {
+    "model": "ai_scale_app.comment",
+    "pk": 5,
+    "fields": {
+      "submissionId": 4,
+      "commenterId": 2,
+      "content": "Good acknowledgement of AI tools",
+      "timestamp": "2025-11-17T10:45:00Z"
     }
   }
 ]

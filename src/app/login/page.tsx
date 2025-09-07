@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,61 +17,117 @@ export default function LoginPage() {
     setTimeout(() => {
       if (email === "lol" && password === "enda") {
         console.log("Login successful");
-        // redirect logic here
+        // TODO: redirect to dashboard
       } else if (email && password) {
         setError("Invalid Email or Password");
       }
+      setIsLoading(false);
     }, 1500);
 
     console.log("Form Submitted", { email, password });
-  }
+  };
 
   return (
     <div className="min-h-screen bg-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
-        <div className="relative w-full max-w-md">
-            {/*Login Container*/}
-            <div className = "bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 space-y-6 transform hover:scale-[1.02] transition-transform duration-300">
-                <div className="text-center space-y-2">
-                    <div className="w-16 h-16 bg-blue-900 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg">
-                        <span className="text-2xl text-white">🔒</span>
-                    </div>
-                    <h1 className="text-3xl font-bold bg-gray-900 bg-clip-text text-transparent">
-                        Welcome Back
-                    </h1>
-                    <p className="text-gray-900">
-                        Sign in to your account
-                    </p>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm animate-in slide-in-from-top duration-300">
-                        {error}
-                    </div>
-                )}
-
-                {/* Form */}
-                <div className="space-y-5">
-                    {/* Email Field*/}
-                    <div className="space-y-2">
-                        <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                            Email Address
-                        </label>
-                        <div className="relative group">
-                            <input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-gray-300 border-gray-600 rounded-xl text-gray-900 placeholder-gray-500 hover:bg-gray-100"
-                                placeholder="Enter your email"
-                                required
-                            />
-                        </div>
-                    </div>
-                </div>
+      <div className="relative w-full max-w-md">
+        {/* Login Container */}
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 space-y-6 transform hover:scale-[1.02] transition-transform duration-300">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 bg-blue-900 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg">
+              <span className="text-2xl text-white">🔒</span>
             </div>
+            <h1 className="text-3xl font-bold bg-gray-900 bg-clip-text text-transparent">
+              Welcome Back
+            </h1>
+            <p className="text-gray-900">Sign in to your account</p>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm animate-in slide-in-from-top duration-300">
+              {error}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email Address
+              </label>
+              <div className="relative group">
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-300 border-gray-600 rounded-xl text-gray-900 placeholder-gray-500 hover:bg-gray-100"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="relative group">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-12 py-3 bg-gray-300 border-gray-600 rounded-xl text-gray-900 placeholder-gray-500 hover:bg-gray-100"
+                  placeholder="Enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-600 hover:text-gray-900"
+                >
+                  {showPassword ? (
+                    <Image 
+                        src="icons/eye-closed.svg"
+                        alt="Hide password"
+                        width={20}
+                        height={20}
+                        className="opacity-70 hover:opacity-100 transition"
+                        />
+                    ) : (
+                    <Image 
+                        src="icons/eye-open.svg"
+                        alt="Show password"
+                        width={20}
+                        height={20}
+                        className="opacity-70 hover:opacity-100 transition"
+                        />
+                    )}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3 rounded-xl bg-blue-700 text-white font-semibold hover:bg-blue-800 disabled:opacity-50 shadow-lg transition"
+            >
+              {isLoading ? "Signing in..." : "Sign In"}
+            </button>
+
+            {/* Extra Links */}
+            <div className="text-center text-sm">
+              <a href="#" className="text-blue-700 hover:underline">
+                Forgot password?
+              </a>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-# To run this command: python manage.py seed_ai_use_scales
+# To run this command: python manage.py generate_ai_use_scales
 
 from django.core.management.base import BaseCommand
 from ai_scale_app.models import AIUseScale  

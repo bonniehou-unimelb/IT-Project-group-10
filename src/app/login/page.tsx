@@ -57,11 +57,13 @@ export default function LoginPage() {
         {/* Login Container */}
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 space-y-6 transform hover:scale-[1.02] transition-transform duration-300">
           <div className="text-center space-y-2">
-            <div className="w-16 h-16 bg-blue-900 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg">
-              <span className="text-2xl text-white">🔒</span>
+            <div className="w-32 h-32 bg-white/95 rounded-2xl mx-auto flex items-center justify-center mb-4">
+              <span className="text-2xl text-white">
+                <Image src="icons/unimelb-logo.svg" alt="University of Melbourne" width={128} height={128}/>
+              </span>
             </div>
             <h1 className="text-3xl font-bold bg-gray-900 bg-clip-text text-transparent">
-              Welcome Back
+               AI Use Scale Editor
             </h1>
             <p className="text-gray-900">Sign in to your account</p>
           </div>

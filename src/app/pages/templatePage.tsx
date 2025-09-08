@@ -1,10 +1,9 @@
-import AIGuidelinesBuilder from './components/AIGuidelinesBuilder';
-/*
+import AIGuidelinesBuilder from '../components/AIGuidelinesBuilder';
 export default function Page() {
   return <div>Test</div>;
 }
-  */
 
+/*
 export default function App() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -19,3 +18,4 @@ export default function App() {
     </div>
   );
 }
+*/

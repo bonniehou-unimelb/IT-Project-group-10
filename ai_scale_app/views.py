@@ -124,3 +124,25 @@ def register(request):
         logger.exception("Registration error")
         return JsonResponse({"success": False, "error": "Server error occurred"},
                             status=HTTPStatus.INTERNAL_SERVER_ERROR)
+
+# POST create new template -- admin/coordinator ONLY
+
+# POST create new rubric
+
+# GET by userID, summary of all templates and rubric owned by that user 
+# This should only return the templates/rubrics with the newest version number if they have same names
+# returns:   Template id, name, subject code, owner ID, status
+
+
+# GET all template details by its templateID
+
+# GET all rubric details by its rubricID
+
+# POST edit the template and create a new template with a newer version number
+
+# POST edit the rubric and create a new rubric with a newer version number
+
+# POST update status of rubric 
+
+# DELETE a template or rubric by its id
+

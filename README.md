@@ -37,7 +37,9 @@ pip install -r requirements.txt
 
 3. Setup database
 (in root directory)
+Load data into database then
 ```bash
+python manage.py makemigrations ai_scale_app
 python manage.py migrate
 ```
 4. Start backend django server

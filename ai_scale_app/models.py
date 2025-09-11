@@ -32,6 +32,8 @@ class Subject(models.Model):
     coordinatorId = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     subjectCode = models.CharField(max_length=10, unique=True)
+    semester = models.PositiveSmallIntegerField()
+    year = models.PositiveSmallIntegerField()
 
     def __str__(self):
         return f"{self.name}, {self.subjectCode}"
@@ -57,13 +59,15 @@ class Template(models.Model):
     name = models.CharField(max_length=120)
     scope = models.CharField(max_length=120, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, blank=True, null=True)
+    version = models.PositiveSmallIntegerField(default=0)  
 
     class Meta:
         unique_together = [("ownerId", "name")]  # avoid duplicate names per owner
         indexes = [models.Index(fields=["ownerId", "name"])]
 
     def __str__(self):
-        return self.name
+        return self.name + " for subject " + self.subject.name
 
 
 class TemplateOwnership(models.Model):
@@ -116,7 +120,9 @@ class AIUseScale(models.Model):
 class TemplateItem(models.Model):
     templateId = models.ForeignKey(Template, on_delete=models.CASCADE)
     task = models.TextField()
-    aiUseScaleLevel = models.CharField(max_length=50, blank=True, null=True)
+    aiUseScaleLevel = models.ForeignKey(
+        AIUseScale, on_delete=models.SET_NULL, blank=True, null=True
+    )
     instructionsToStudents = models.TextField(blank=True, null=True)
     examples = models.TextField(blank=True, null=True)
     aiGeneratedContent = models.TextField(blank=True, null=True)
@@ -135,6 +141,8 @@ class Rubric(models.Model):
     scope = models.CharField(max_length=120, blank=True, null=True)
     creationDate = models.DateTimeField(auto_now_add=True)
     isFinished = models.BooleanField(blank=True, null=True)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, blank=True, null=True)
+    version = models.PositiveSmallIntegerField(default=0)  
 
     class Meta:
         unique_together = [("ownerId", "name")]
@@ -147,7 +155,9 @@ class Rubric(models.Model):
 class RubricItem(models.Model):
     rubricId = models.ForeignKey(Rubric, on_delete=models.CASCADE)
     task = models.TextField()
-    aiUseScaleLevel = models.CharField(max_length=50, blank=True, null=True)
+    aiUseScaleLevel = models.ForeignKey(
+        AIUseScale, on_delete=models.SET_NULL, blank=True, null=True
+    )
     instructionsToStudents = models.TextField(blank=True, null=True)
     examples = models.TextField(blank=True, null=True)
     aiGeneratedContent = models.TextField(blank=True, null=True)
@@ -163,6 +173,7 @@ class RubricItem(models.Model):
 class AcknowledgementForm(models.Model):
     rubricId = models.ForeignKey(Rubric, on_delete=models.CASCADE)
     name = models.CharField(max_length=120)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
         unique_together = [("rubricId", "name")]  # avoid duplicate form names under same rubric

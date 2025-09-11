@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login as auth_login
-from .models import User, Subject
+from .models import User, Subject, Template, TemplateItem, TemplateOwnership, Enrolment
 from http import HTTPStatus
 import json
 import logging
@@ -125,9 +125,47 @@ def register(request):
         return JsonResponse({"success": False, "error": "Server error occurred"},
                             status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-# POST create new template -- admin/coordinator ONLY
+# POST create/update template 
+# body {ownerId, name, scope, description, subject, version, isPublishable, isTemplate}
+# given version should be the old version number
+@csrf_exempt
+@require_POST
+def create_or_update_template(request):
+    data = _body(request)
+    ownerId = data.get("ownerId")
+    name = data.get("name")
+    subject_id = data.get("subject")
+    old_version_num = data.get("version", 0)
+    scope = data.get("scope") or ""
+    description = data.get("description") or ""
+    is_publishable = data.get("isPublishable", False)
+    is_template = data.get("isTemplate", False)
 
-# POST create new rubric
+    # Create a new subject if it doesn't exist yet
+    try:
+        subject = Subject.objects.get(pk=int(sid))
+    except (ValueError, Subject.DoesNotExist):
+        # TODO: create new subject
+        return JsonResponse({"error": "subject does not exist yet"}, status=HTTPStatus.BAD_REQUEST)
+    try:
+        t = Template.objects.create(
+                ownerId=ownerId,
+                name=name,
+                subject=subject,
+                scope=scope,
+                description=description,
+                version=old_version_num+1,
+                isPublishable=is_publishable,
+                isTemplate=is_template,
+            )
+        return JsonResponse({"success": "template succesfully updated"}, status=HTTPStatus.OK)
+    except:
+        return JsonResponse({"error": "failed to update template"}, status=HTTPStatus.BAD_REQUEST)
+
+# POST add template item
+
+
+
 
 # GET by userID, summary of all templates and rubric owned by that user 
 # This should only return the templates/rubrics with the newest version number if they have same names
@@ -136,13 +174,13 @@ def register(request):
 
 # GET all template details by its templateID
 
-# GET all rubric details by its rubricID
+# GET all older version numbers of template
 
 # POST edit the template and create a new template with a newer version number
 
 # POST edit the rubric and create a new rubric with a newer version number
 
-# POST update status of rubric 
+# POST update status of template 
 
-# DELETE a template or rubric by its id
+# DELETE a template by its id, also delete its template items
 

@@ -2,8 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .models import (
-    User, Subject, Enrolment, Template, TemplateOwnership, TemplateItem,
-    Rubric, RubricItem, AcknowledgementForm, AcknowledgementFormItem,
+    User, Subject, Enrolment, Template, TemplateOwnership, TemplateItem, AcknowledgementForm, AcknowledgementFormItem,
     AIUseScale,  
 )
 
@@ -23,16 +22,7 @@ class TemplateAdmin(admin.ModelAdmin):
     search_fields = ("name", "scope", "description")
     inlines = [TemplateItemInline]
 
-class RubricItemInline(admin.TabularInline):
-    model = RubricItem
-    extra = 0
 
-@admin.register(Rubric)
-class RubricAdmin(admin.ModelAdmin):
-    list_display = ("name", "ownerId", "scope", "isFinished", "creationDate")
-    list_filter = ("isFinished",)
-    search_fields = ("name", "scope", "description")
-    inlines = [RubricItemInline]
 
 # --- The rest are fine as basic registrations ---
 admin.site.register(Subject)

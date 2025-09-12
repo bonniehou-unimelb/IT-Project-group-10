@@ -1,24 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-
-# class User(models.Model):
-#     class Role(models.TextChoices):
-#         STUDENT = "STUDENT", "Student"
-#         STAFF = "STAFF", "Staff"
-#         COORDINATOR = "COORDINATOR", "Coordinator"
-#         ADMIN = "ADMIN", "Admin"
-
-#     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT)
-#     email = models.EmailField(unique=True)
-#     firstName = models.CharField(max_length=50)
-#     lastName = models.CharField(max_length=50)
-#     password = models.CharField(max_length=100, blank=True, default="")
-
-#     def __str__(self):
-#         return f"{self.firstName} {self.lastName}: {self.email} is a {self.role}"
-
-
+# The below classes generates the schemas for our relational database 
 class User(AbstractUser):
     class Role(models.TextChoices):
         STUDENT = "STUDENT", "Student"
@@ -136,40 +119,6 @@ class TemplateItem(models.Model):
     def __str__(self):
         return f"Item {self.id} in {self.templateId}"
 
-# class Rubric(models.Model):
-#     ownerId = models.ForeignKey(User, on_delete=models.CASCADE)
-#     name = models.CharField(max_length=120)
-#     description = models.TextField(blank=True, null=True)
-#     scope = models.CharField(max_length=120, blank=True, null=True)
-#     creationDate = models.DateTimeField(auto_now_add=True)
-#     isFinished = models.BooleanField(blank=True, null=True)
-#     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, blank=True, null=True)
-#     version = models.PositiveSmallIntegerField(default=0)  
-
-#     class Meta:
-#         unique_together = [("ownerId", "name")]
-#         indexes = [models.Index(fields=["ownerId", "name"])]
-
-#     def __str__(self):
-#         return self.name
-
-
-# class RubricItem(models.Model):
-#     rubricId = models.ForeignKey(Rubric, on_delete=models.CASCADE)
-#     task = models.TextField()
-#     aiUseScaleLevel = models.ForeignKey(
-#         AIUseScale, on_delete=models.SET_NULL, blank=True, null=True
-#     )
-#     instructionsToStudents = models.TextField(blank=True, null=True)
-#     examples = models.TextField(blank=True, null=True)
-#     aiGeneratedContent = models.TextField(blank=True, null=True)
-#     useAcknowledgement = models.BooleanField(default=False)
-
-#     class Meta:
-#         indexes = [models.Index(fields=["rubricId"])]
-
-#     def __str__(self):
-#         return f"RubricItem {self.id} in {self.rubricId}"
 
 
 class AcknowledgementForm(models.Model):

@@ -16,6 +16,7 @@ interface AIUseLevel {
   instructions: string;
   examples: string;
   acknowledgement: string;
+  resources: string;
 }
 
 interface TemplateScale {
@@ -36,28 +37,32 @@ export default function AIGuidelinesBuilder() {
       label: 'No AI Use Permitted',
       instructions: 'The assessment is completed entirely without AI assistance. This level ensures that students rely solely on their knowledge, understanding, and skills. AI must not be used at any point during the assessment',
       examples: 'Traditional exams, in-class essays, mathematical problem-solving without computational aids, original creative writing',
-      acknowledgement: 'I confirm that I have not used any AI tools in completing this assessment.'
+      acknowledgement: 'Students must acknowledge that they have not used AI tools in completing this assessment.',
+      resources: 'Add resources here...',
     },
     {
       id: '2',
       label: 'AI for Research & Brainstorming Only',
       instructions: 'You may use AI tools for initial research, topic exploration, and brainstorming ideas. However, all analysis, writing, and final work must be your own.',
       examples: 'Using ChatGPT to understand complex topics, generating research questions, exploring different perspectives on a subject',
-      acknowledgement: 'I used AI tools for [specify purpose] but all analysis and written work is my own original contribution.'
+      acknowledgement: 'Students must acknowledge that they have not used AI tools in completing this assessment.',
+      resources: 'Add resources here...',
     },
     {
       id: '3',
       label: 'AI as Writing Assistant',
       instructions: 'AI tools may be used to assist with writing tasks such as grammar checking, style suggestions, and structural feedback. The core ideas and arguments must be your own.',
       examples: 'Using Grammarly for editing, ChatGPT for feedback on draft structure, AI tools for citation formatting',
-      acknowledgement: 'I used AI tools to assist with [editing/formatting/feedback] while maintaining original authorship of all content and ideas.'
+      acknowledgement: 'Students must acknowledge that they have not used AI tools in completing this assessment.',
+      resources: 'Add resources here...',
     },
     {
       id: '4',
       label: 'Collaborative AI Use Encouraged',
       instructions: 'AI tools are encouraged as collaborative partners. You may use AI for research, drafting, analysis, and refinement while demonstrating critical evaluation of AI outputs.',
       examples: 'Co-writing with AI, using AI for data analysis, AI-assisted coding projects, collaborative problem-solving with AI',
-      acknowledgement: 'I collaborated with AI tools throughout this project. I have critically evaluated all AI contributions and take responsibility for the final submission.'
+      acknowledgement: 'Students must acknowledge that they have not used AI tools in completing this assessment.',
+      resources: 'Add resources here...',
     }
   ]);
 
@@ -68,7 +73,8 @@ export default function AIGuidelinesBuilder() {
       label: 'New AI Use Level',
       instructions: '',
       examples: '',
-      acknowledgement: ''
+      acknowledgement: '',
+      resources: 'Add resources here...',
     }]);
   };
 
@@ -103,7 +109,7 @@ export default function AIGuidelinesBuilder() {
           <div className="space-y-4">
             <div className="flex items-start gap-4">
               <div className="flex-1 max-w-md">
-                <Label htmlFor="guidelines-title">Guidelines Title</Label>
+                <Label htmlFor="guidelines-title">Asessment Title</Label>
                 <Input
                   id="guidelines-title"
                   value={guidelinesTitle}
@@ -181,8 +187,11 @@ export default function AIGuidelinesBuilder() {
                   <th className="text-left p-4 min-w-64 bg-primary/5 border-r">
                     <div className="font-medium text-primary">Examples</div>
                   </th>
-                  <th className="text-left p-4 min-w-64 bg-primary/5">
+                  <th className="text-left p-4 min-w-64 bg-primary/5 border-r">
                     <div className="font-medium text-primary">AI Acknowledgement</div>
+                  </th>
+                  <th className="text-left p-4 min-w-64 bg-primary/5">
+                    <div className="font-medium text-primary">Resources</div>
                   </th>
                 </tr>
               </thead>
@@ -213,7 +222,7 @@ export default function AIGuidelinesBuilder() {
                         className="min-h-32 resize-none text-sm bg-transparent"
                       />
                     </td>
-                    <td className="p-4 align-top">
+                    <td className="p-4 align-top border-r">
                       <Textarea
                         value={level.acknowledgement}
                         onChange={(e) => updateAIUseLevel(level.id, 'acknowledgement', e.target.value)}
@@ -221,6 +230,16 @@ export default function AIGuidelinesBuilder() {
                         className="min-h-32 resize-none text-sm bg-transparent"
                       />
                     </td>
+                    <td className="p-4 align-top">
+                      <Textarea
+                        value={level.resources}
+                        onChange={(e) => updateAIUseLevel(level.id, 'resources', e.target.value)}
+                        placeholder="Links to resources on ethical AI use..."
+                        className="min-h-32 resize-none text-sm bg-transparent"
+                      />
+                    </td>
+
+
                   </tr>
                 ))}
               </tbody>

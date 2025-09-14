@@ -102,6 +102,28 @@ export default function Dashboard() {
             {/* Side Menu */}
             <div className="min-h-screen max-w-50 bg-blue-900 -translate-y-57">
                 <p className="font-bold text-xl text-white translate-x-6 translate-y-4"> ⚙️ Dashboard </p>
+                {/* Menu Buttons -- currently unimplemented. Should we make these go somewhere? */}
+                <div className="translate-y-10 hover:bg-blue-950">
+                    <button 
+                        type="button"
+                        className="text-white m-2">
+                        My Templates
+                    </button>
+                </div>
+                <div className="translate-y-11 hover:bg-blue-950">
+                    <button 
+                        type="button"
+                        className="text-white m-2">
+                        All Templates
+                    </button>
+                </div>
+                <div className="translate-y-11 hover:bg-blue-950">
+                    <button 
+                        type="button"
+                        className="text-white m-2">
+                        Profile
+                    </button>
+                </div>
             </div>
         </div>
     );

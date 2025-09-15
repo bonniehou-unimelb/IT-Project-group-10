@@ -47,23 +47,48 @@ export default function Dashboard() {
             {/* Navigation Table */}
             {/* TODO: Fix so it reads this data from the sql. Just sample data in there at the moment*/}
             <div className="translate-x-52 translate-y-25">
-                <table className="border-collapse border border-gray-300 table-auto">
+                <table className="table-border">
                     <thead>
                         <tr>
-                            <th className="column-padding border text-left"> Template Name </th>
-                            <th className="column-padding border text-left"> Assessment </th>
-                            <th className="column-padding border text-left"> Subject </th>
-                            <th className="column-padding border text-left"> Creator </th>
-                            <th className="column-padding border text-left"> Actions </th>
+                            <th 
+                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium"> 
+                                Template Name 
+                            </th>
+                            <th 
+                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium"> 
+                                Assessment
+                            </th>
+                            <th 
+                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium">
+                                Subject
+                            </th>
+                            <th 
+                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium">
+                                Semester
+                            </th>
+                            <th 
+                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium">
+                                Year
+                            </th>
+                            <th 
+                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium">
+                                Creator
+                            </th>
+                            <th 
+                                className="bg-gray-200 column-padding bottom-border text-left text-blue-900 font-medium"> 
+                                Actions 
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td className="column-padding border text-left"> Template 1 </td>
-                            <td className="column-padding border text-left"> Assignment 1 </td>
-                            <td className="column-padding border text-left"> COMP30022 </td>
-                            <td className="column-padding border text-left"> John Smith </td>
-                            <td className="column-padding border text-left"> 
+                            <td className="column-padding text-left right-border "> Template 1 </td>
+                            <td className="column-padding text-left right-border "> Assignment 1 </td>
+                            <td className="column-padding text-left right-border "> COMP30022 </td>
+                            <td className="column-padding text-left right-border "> 2 </td>
+                            <td className="column-padding text-left right-border "> 2025 </td>
+                            <td className="column-padding text-left right-border "> John Smith </td>
+                            <td className="column-padding text-left"> 
                                 <button 
                                     type="submit"
                                     className="rounded-xl border border-blue-900 font-semibold px-2 hover:bg-gray-200">
@@ -81,26 +106,18 @@ export default function Dashboard() {
             </div>
 
             {/* Top Panel */}
-            <div className="min-h-13 max-h-13 bg-white p-4 translate-x-50 -translate-y-45">
+            <div className="min-h-13 max-h-13 bg-white p-4 translate-x-50 -translate-y-57">
                 <p className="text-gray-500"> Dashboard </p>
-                <div className="float-right -translate-x-60 -translate-y-7">
-                    <Image
-                        src="icons/profile-filler.svg"
-                        alt="profile picture"
-                        width={30}
-                        height={30}
-                    />
-                    <div className="translate-x-8 -translate-y-6.5">
-                        <Menu menuButton={<MenuButton>*username* ▿</MenuButton>} transition>
-                            {/* TODO: Link this back to the log in page */}
-                            <MenuItem>Log Out</MenuItem>
-                        </Menu>
-                    </div>
+                <div className="float-right -translate-x-50 -translate-y-6">
+                    <Menu menuButton={<MenuButton>*username* ▿</MenuButton>} transition>
+                        {/* TODO: Link this back to the log in page */}
+                        <MenuItem>Log Out</MenuItem>
+                    </Menu>
                 </div>
             </div>
 
             {/* Side Menu */}
-            <div className="min-h-screen max-w-50 bg-blue-900 -translate-y-57">
+            <div className="min-h-screen max-w-50 bg-blue-900 -translate-y-69.75">
                 <p className="font-bold text-xl text-white translate-x-6 translate-y-4"> ⚙️ Dashboard </p>
                 {/* Menu Buttons -- currently unimplemented. Should we make these go somewhere? */}
                 <div className="translate-y-10 hover:bg-blue-950">

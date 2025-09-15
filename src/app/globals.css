@@ -188,9 +188,25 @@ html {
   font-size: var(--font-size);
 }
 
+.table-border {
+  border-spacing: 0;
+  border-radius: 10px;
+  border-collapse: separate;
+  border: 1px solid lightgray;
+  overflow: hidden;
+}
+
 .column-padding {
-  padding-right: 10px;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  padding-left: 2px;
+  padding-right:30px;
+  padding-top: 10px;
+  padding-bottom: 15px;
+  padding-left: 5px; 
+}
+
+.right-border {
+  border-right: 1px solid lightgray;
+}
+
+.bottom-border {
+  border-bottom: 1px solid lightgray;
 }

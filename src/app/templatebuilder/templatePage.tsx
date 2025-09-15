@@ -1,9 +1,4 @@
-import AIGuidelinesBuilder from './components/AIGuidelinesBuilder';
-/*
-export default function Page() {
-  return <div>Test</div>;
-}
-  */
+import AIGuidelinesBuilder from '../components/AIGuidelinesBuilder';
 
 export default function App() {
   return (

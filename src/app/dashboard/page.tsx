@@ -1,18 +1,61 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
+const API_BACKEND_URL = "http://localhost:8000";
 
 {/* Dependencies required for drop down menu */}
 import { Menu, MenuItem, MenuButton } from '@szhsin/react-menu';
 import '@szhsin/react-menu/dist/index.css';
 import '@szhsin/react-menu/dist/transitions/zoom.css';
 
+export type TemplateSummary = {
+    templateId: number;
+    name: string;
+    version: number;
+    subjectCode: string;
+    year: number;
+    semester: number;
+    ownerName: string;
+    isPublishable: boolean;
+    isTemplate: boolean;
+};
+
 export default function Dashboard() {
+    const router = useRouter();
     const [search, setSearch] = useState("");
+    const [templateSum, setTemplateSum] = useState<TemplateSummary[]>([]);
+    const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
+    const [loading, setLoading] = useState(false);
     
+    // Get dashboard template summary
+    useEffect(() => {
+        if (!username) return;
+        (async () => {
+        try {
+        setLoading(true);
+        const res = await fetch(
+        `${API_BACKEND_URL}/template/summary/?username=${encodeURIComponent(
+        username)}`,
+        {
+            method: "GET",
+            credentials: "include"
+        }
+        );
+
+        const data = (await res.json()) as { templates: TemplateSummary[] };        
+        setTemplateSum(data.templates || []);
+    } catch (e: any) {
+        console.log("Fail to load dashboard information")
+    } finally {
+        setLoading(false);
+    }
+        })();    
+    }, [username]);
+
     return (
         <div className="max-h-screen bg-gray-100">
-            <h1 className="text-3xl text-black font-bold translate-x-52 translate-y-15"> Welcome Back *username*!</h1>
+            <h1 className="text-3xl text-black font-bold translate-x-52 translate-y-15"> Welcome Back!</h1>
 
             {/* Search Bar */}
             <div className="translate-x-52 translate-y-17">
@@ -44,72 +87,69 @@ export default function Dashboard() {
                 + Create New Template
             </button>
 
-            {/* Navigation Table */}
-            {/* TODO: Fix so it reads this data from the sql. Just sample data in there at the moment*/}
-            <div className="translate-x-52 translate-y-25">
-                <table className="table-border">
-                    <thead>
-                        <tr>
-                            <th 
-                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium"> 
-                                Template Name 
-                            </th>
-                            <th 
-                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium"> 
-                                Assessment
-                            </th>
-                            <th 
-                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium">
-                                Subject
-                            </th>
-                            <th 
-                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium">
-                                Semester
-                            </th>
-                            <th 
-                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium">
-                                Year
-                            </th>
-                            <th 
-                                className="bg-gray-200 column-padding right-border bottom-border text-left text-blue-900 font-medium">
-                                Creator
-                            </th>
-                            <th 
-                                className="bg-gray-200 column-padding bottom-border text-left text-blue-900 font-medium"> 
-                                Actions 
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td className="column-padding text-left right-border "> Template 1 </td>
-                            <td className="column-padding text-left right-border "> Assignment 1 </td>
-                            <td className="column-padding text-left right-border "> COMP30022 </td>
-                            <td className="column-padding text-left right-border "> 2 </td>
-                            <td className="column-padding text-left right-border "> 2025 </td>
-                            <td className="column-padding text-left right-border "> John Smith </td>
-                            <td className="column-padding text-left"> 
-                                <button 
-                                    type="submit"
-                                    className="rounded-xl border border-blue-900 font-semibold px-2 hover:bg-gray-200">
-                                    Preview
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="translate-x-1 rounded-xl border border-blue-900 font-semibold px-2 hover:bg-gray-200">
-                                    Duplicate
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
+            {/* Navigation Table, displays summary data for each template owned by user for each row */}
+            <div className="mt-6 overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+                <table className="min-w-full border-collapse text-sm">
+                <thead className="bg-gray-50">
+                    <tr className="text-left text-gray-700">
+                    <th className="px-4 py-3 font-medium">Template ID</th>
+                    <th className="px-4 py-3 font-medium">Template Name</th>
+                    <th className="px-4 py-3 font-medium">Subject Code</th>
+                    <th className="px-4 py-3 font-medium">Semester</th>
+                    <th className="px-4 py-3 font-medium">Year</th>
+                    <th className="px-4 py-3 font-medium">Version</th>
+                    <th className="px-4 py-3 font-medium">Creator Name</th>
+                    <th className="px-4 py-3 font-medium">Type</th>
+                    <th className="px-4 py-3 font-medium">Publishable?</th>
+                    <th className="px-4 py-3 font-medium">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-100">
+                    {templateSum.length === 0 && (
+                    <tr>
+                        <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
+                        No templates yet.
+                        </td>
+                    </tr>
+                    )}
+
+                    {/* map each template to each row of table */}
+                    {templateSum.map((tpl) => (
+                    <tr key={tpl.templateId} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">{tpl.templateId}</td>
+                        <td className="px-4 py-3">{tpl.name}</td>
+                        <td className="px-4 py-3">{tpl.subjectCode}</td>
+                        <td className="px-4 py-3">{tpl.semester}</td>
+                        <td className="px-4 py-3">{tpl.year}</td>
+                        <td className="px-4 py-3">v{tpl.version}</td>
+                        <td className="px-4 py-3">{tpl.ownerName || "NA"}</td>
+                        <td className="px-4 py-3">{tpl.isTemplate ? "Template" : "Instance"}</td>
+                        <td className="px-4 py-3">{tpl.isPublishable ? "✓" : "✘"}</td>
+                        <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-2">
+                            <button className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50">
+                            Preview
+                            </button>
+                            <button className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50">
+                            Duplicate
+                            </button>
+                        </div>
+                        </td>
+                    </tr>
+                    ))}
+                </tbody>
                 </table>
             </div>
+            </div>
+
 
             {/* Top Panel */}
             <div className="min-h-13 max-h-13 bg-white p-4 translate-x-50 -translate-y-57">
                 <p className="text-gray-500"> Dashboard </p>
                 <div className="float-right -translate-x-50 -translate-y-6">
-                    <Menu menuButton={<MenuButton>*username* ▿</MenuButton>} transition>
+                    <Menu menuButton={<MenuButton>{username} ▿</MenuButton>} transition>
                         {/* TODO: Link this back to the log in page */}
                         <MenuItem>Log Out</MenuItem>
                     </Menu>

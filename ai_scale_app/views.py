@@ -226,7 +226,7 @@ def update_template_item(request):
 
 # GET /template/summary/?username=...
 # returns summary of all templates owned by that user, includes all previous versions of the same template too
-# returns:   templateId, Template name, version, subject code, owner name, isPublishable, isTemplate
+# returns:   templateId, Template name, version, subject code, subject year, semester, owner name, isPublishable, isTemplate
 @require_GET
 def summary_templates(request):
     """
@@ -258,6 +258,8 @@ def summary_templates(request):
             "name": t.name,
             "version": t.version,
             "subjectCode": t.subject.subjectCode,
+            "year": t.subject.year,
+            "semester": t.subject.semester,
             "ownerName": get_full_owner_name(t),
             "isPublishable": bool(t.isPublishable),
             "isTemplate": bool(t.isTemplate),
@@ -327,3 +329,6 @@ def delete_template(request):
         return JsonResponse({"error": "Template does not exist"}, status=HTTPStatus.NOT_FOUND)
     t.delete()
     return JsonResponse({"success": True}, status=HTTPStatus.OK)
+
+
+# 

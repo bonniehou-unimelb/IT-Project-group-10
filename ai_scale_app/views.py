@@ -161,6 +161,7 @@ def create_or_update_template(request):
     """
     data = _body(request)
     ownerId = data.get("username")
+    owner = User.objects.get(username=username)
     name = data.get("name")
     subject_id = data.get("subject")
     old_version_num = data.get("version", 0)
@@ -177,7 +178,7 @@ def create_or_update_template(request):
         return JsonResponse({"error": "subject does not exist yet"}, status=HTTPStatus.BAD_REQUEST)
     try:
         t = Template.objects.create(
-                ownerId=ownerId,
+                ownerId=owner,
                 name=name,
                 subject=subject,
                 scope=scope,
@@ -186,7 +187,7 @@ def create_or_update_template(request):
                 isPublishable=is_publishable,
                 isTemplate=is_template,
             )
-        t_owner = TemplateOwnership.objects.create(ownerId=t.ownerId, templateId=t)
+        TemplateOwnership.objects.create(ownerId=t.owner, templateId=t)
         return JsonResponse({"success": "template succesfully updated"}, status=HTTPStatus.OK)
     except:
         return JsonResponse({"error": "failed to update template"}, status=HTTPStatus.BAD_REQUEST)
@@ -200,14 +201,14 @@ def update_template_item(request):
     Creates a new template item entry inside the requested template with the requested fields
     """
     data = _body(request)
-    templateId = data.get["templateId"]
-    task = data.get["task"]
-    aiUseScaleLevel = data.get["aiUseScaleLevel"]
+    templateId = data.get("templateId")
+    task = data.get("task")
+    aiUseScaleLevel = data.get("aiUseScaleLevel")
     aiUseScaleLevelObj = resolve_ai_use_level(aiUseScaleLevel)
-    instructionsToStudents = data.get["instructionsToStudents"]
-    examples = data.get["examples"]
-    aiGeneratedContent = data.get["aiGeneratedContent"]
-    useAcknowledgement = data.get["useAcknowledgement"]
+    instructionsToStudents = data.get("instructionsToStudents")
+    examples = data.get("examples")
+    aiGeneratedContent = data.get("aiGeneratedContent")
+    useAcknowledgement = data.get("useAcknowledgement")
 
     try:
         t_item = TemplateItem.objects.create(

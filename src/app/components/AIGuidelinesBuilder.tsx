@@ -9,6 +9,8 @@ import { Plus, Trash2, Settings} from 'lucide-react';
 import { Label } from './label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
 import AITemplateRepository from './AITemplateRepository';
+import { useTemplateDetails, createOrUpdateTemplateAction, addTemplateItemAction, deleteTemplateAction } from './api';
+
 
 interface AIUseLevel {
   id: string;
@@ -28,8 +30,11 @@ interface TemplateScale {
 }
 
 export default function AIGuidelinesBuilder() {
+  const templateID=1;
   const [guidelinesTitle, setGuidelinesTitle] = useState('AI Use Guidelines for Assessment');
   const [assessmentType, setAssessmentType] = useState('');
+  const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
+  const { data: active, loading: detailLoading, error: detailErr, open, setData: setActive } = useTemplateDetails(templateID);
   
   const [aiUseLevels, setAIUseLevels] = useState<AIUseLevel[]>([
     {

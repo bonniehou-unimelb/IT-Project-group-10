@@ -5,7 +5,7 @@ import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/zoom.css";
 
-const API_BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+const API_BACKEND_URL = "http://localhost:8000";
 
 export type TemplateSummary = {
   templateId: number;

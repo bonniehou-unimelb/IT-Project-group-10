@@ -53,9 +53,9 @@ export default function Dashboard() {
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <aside className="hidden md:flex md:w-64 md:flex-col bg-blue-900 text-white">
-          <div className="w-32 h-32 bg-white/95 rounded-2xl mx-auto flex items-center justify-center translate-y-2">
+          <div className="w-40 h-40 mx-auto flex items-center justify-center translate-y-2">
             <span className="text-2xl text-white">
-              <Image src="icons/unimelb-logo.svg" alt="University of Melbourne" width={100} height={100}/>
+              <Image src="icons/logo.svg" alt="University of Melbourne" width={200} height={200}/>
             </span>
           </div>
           <nav className="mt-5 flex-1">

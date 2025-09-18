@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/zoom.css";
@@ -52,8 +53,12 @@ export default function Dashboard() {
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <aside className="hidden md:flex md:w-64 md:flex-col bg-blue-900 text-white">
-          <div className="px-6 py-5 text-xl font-bold">⚙️ Dashboard</div>
-          <nav className="mt-2 flex-1">
+          <div className="w-32 h-32 bg-white/95 rounded-2xl mx-auto flex items-center justify-center translate-y-2">
+            <span className="text-2xl text-white">
+              <Image src="icons/unimelb-logo.svg" alt="University of Melbourne" width={100} height={100}/>
+            </span>
+          </div>
+          <nav className="mt-5 flex-1">
             <button className="w-full text-left px-6 py-3 hover:bg-blue-950">My Templates</button>
             <button className="w-full text-left px-6 py-3 hover:bg-blue-950">All Templates</button>
             <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Profile</button>
@@ -73,7 +78,11 @@ export default function Dashboard() {
                 menuButton={<MenuButton className="px-3 py-2 rounded-md border">{username} ▿</MenuButton>}
                 transition
               >
-                <MenuItem>Log Out</MenuItem>
+                {/* TODO: Fix so it erases previous user information */}
+                <MenuItem
+                  onClick = {() => router.push('/login')}>
+                  Log Out
+                </MenuItem>
               </Menu>
             </div>
           </header>

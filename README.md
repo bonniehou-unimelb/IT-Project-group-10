@@ -3,6 +3,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 ## Getting Started
 
 **Make sure you have [Node.js and npm](https://nodejs.org/) installed before running the development server.**
+Install dependencies:
+```bash
+npm install
+```
 
 First, run the development server:
 
@@ -34,19 +38,26 @@ source .venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
-
 3. Setup database
-(in root directory)
-Load data into database then
 ```bash
 python manage.py makemigrations ai_scale_app
 python manage.py migrate
 ```
-4. Start backend django server
+4. Load data into database (in root directory)
+```bash
+python manage.py generate_ai_use_scales
+python manage.py loaddata ai_scale_app/table_data/dummy_data.json
+python manage.py hash_passwords
+```
+5. Create superuser 
+```bash
+python manage.py createsuperuser
+```
+6. Start backend django server
 ```bash
 python manage.py runserver
 ```
-
+Visit http://127.0.0.1:8000/admin/ for admin log in page for server.
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

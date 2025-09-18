@@ -30,6 +30,12 @@ def _body(request) -> dict:
             return {}
     return request.POST.dict()
 
+def _get_rid_of_escape_char(s):
+    """
+    Unescape for strings e.g. \"
+    """
+    return s.replace("\\", "") if isinstance(s, str) else s
+
 # ---- API ENDPOINTS ---- #
 def index(request):
     return HttpResponse("Hello. You're at the ai scale app index.")
@@ -290,6 +296,11 @@ def template_details(request):
             "aiUseScaleLevel_id", "aiUseScaleLevel__code", "aiUseScaleLevel__title",
         )
     )
+
+    for i in template_items:
+        i["instructionsToStudents"] = _get_rid_of_escape_char(i.get("instructionsToStudents"))
+        i["examples"] = _get_rid_of_escape_char(i.get("examples"))
+        
     return JsonResponse({
         "id": t.id,
         "name": t.name,
@@ -299,6 +310,8 @@ def template_details(request):
             "id": t.subject_id,
             "code": t.subject.subjectCode,
             "name": t.subject.name,
+            "year": t.subject.year,
+            "semester": t.subject.semester
         },
         "scope": t.scope,
         "description": t.description,

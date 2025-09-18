@@ -28,7 +28,7 @@ export type TemplateDetails = {
   name: string;
   version: number;
   ownerId: number;
-  subject: { id: number; code: string; name: string };
+  subject: { id: number; code: string; name: string ; semester: number; year: number};
   scope: string;
   description: string;
   isPublishable: boolean;
@@ -62,8 +62,8 @@ export function useTemplateDetails(templateID: number) {
     setLoading(true);
     setErr(null);
 
-    fetch(`${API_BACKEND_URL}/template/details/?templateId=${templateID}`, {
-      credentials: "include",
+    fetch(`${API_BACKEND_URL}/template/details/?templateId=${encodeURIComponent(templateID)}`, {
+      method: "GET", credentials: "include",
     })
       .then(async (res) => {
         const body = await parseJSON<TemplateDetails>(res);
@@ -76,8 +76,6 @@ export function useTemplateDetails(templateID: number) {
   return { data, loading, error, open, setTemplateId, setData };
 }
 
-// “Actions” that update server and then call provided setters/refreshers.
-// Callers don’t await; they pass UI callbacks.
 
 export type NewVersionForm = {
   name: string;

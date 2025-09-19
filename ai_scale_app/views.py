@@ -30,6 +30,12 @@ def _body(request) -> dict:
             return {}
     return request.POST.dict()
 
+def _get_rid_of_escape_char(s):
+    """
+    Unescape for strings e.g. \"
+    """
+    return s.replace("\\", "") if isinstance(s, str) else s
+
 # ---- API ENDPOINTS ---- #
 def index(request):
     return HttpResponse("Hello. You're at the ai scale app index.")
@@ -161,6 +167,7 @@ def create_or_update_template(request):
     """
     data = _body(request)
     ownerId = data.get("username")
+    owner = User.objects.get(username=username)
     name = data.get("name")
     subject_id = data.get("subject")
     old_version_num = data.get("version", 0)
@@ -177,7 +184,7 @@ def create_or_update_template(request):
         return JsonResponse({"error": "subject does not exist yet"}, status=HTTPStatus.BAD_REQUEST)
     try:
         t = Template.objects.create(
-                ownerId=ownerId,
+                ownerId=owner,
                 name=name,
                 subject=subject,
                 scope=scope,
@@ -186,7 +193,7 @@ def create_or_update_template(request):
                 isPublishable=is_publishable,
                 isTemplate=is_template,
             )
-        t_owner = TemplateOwnership.objects.create(ownerId=t.ownerId, templateId=t)
+        TemplateOwnership.objects.create(ownerId=t.owner, templateId=t)
         return JsonResponse({"success": "template succesfully updated"}, status=HTTPStatus.OK)
     except:
         return JsonResponse({"error": "failed to update template"}, status=HTTPStatus.BAD_REQUEST)
@@ -200,14 +207,14 @@ def update_template_item(request):
     Creates a new template item entry inside the requested template with the requested fields
     """
     data = _body(request)
-    templateId = data.get["templateId"]
-    task = data.get["task"]
-    aiUseScaleLevel = data.get["aiUseScaleLevel"]
+    templateId = data.get("templateId")
+    task = data.get("task")
+    aiUseScaleLevel = data.get("aiUseScaleLevel")
     aiUseScaleLevelObj = resolve_ai_use_level(aiUseScaleLevel)
-    instructionsToStudents = data.get["instructionsToStudents"]
-    examples = data.get["examples"]
-    aiGeneratedContent = data.get["aiGeneratedContent"]
-    useAcknowledgement = data.get["useAcknowledgement"]
+    instructionsToStudents = data.get("instructionsToStudents")
+    examples = data.get("examples")
+    aiGeneratedContent = data.get("aiGeneratedContent")
+    useAcknowledgement = data.get("useAcknowledgement")
 
     try:
         t_item = TemplateItem.objects.create(
@@ -226,7 +233,7 @@ def update_template_item(request):
 
 # GET /template/summary/?username=...
 # returns summary of all templates owned by that user, includes all previous versions of the same template too
-# returns:   templateId, Template name, version, subject code, owner name, isPublishable, isTemplate
+# returns:   templateId, Template name, version, subject code, subject year, semester, owner name, isPublishable, isTemplate
 @require_GET
 def summary_templates(request):
     """
@@ -258,6 +265,8 @@ def summary_templates(request):
             "name": t.name,
             "version": t.version,
             "subjectCode": t.subject.subjectCode,
+            "year": t.subject.year,
+            "semester": t.subject.semester,
             "ownerName": get_full_owner_name(t),
             "isPublishable": bool(t.isPublishable),
             "isTemplate": bool(t.isTemplate),
@@ -287,6 +296,11 @@ def template_details(request):
             "aiUseScaleLevel_id", "aiUseScaleLevel__code", "aiUseScaleLevel__title",
         )
     )
+
+    for i in template_items:
+        i["instructionsToStudents"] = _get_rid_of_escape_char(i.get("instructionsToStudents"))
+        i["examples"] = _get_rid_of_escape_char(i.get("examples"))
+        
     return JsonResponse({
         "id": t.id,
         "name": t.name,
@@ -296,6 +310,8 @@ def template_details(request):
             "id": t.subject_id,
             "code": t.subject.subjectCode,
             "name": t.subject.name,
+            "year": t.subject.year,
+            "semester": t.subject.semester
         },
         "scope": t.scope,
         "description": t.description,
@@ -327,3 +343,6 @@ def delete_template(request):
         return JsonResponse({"error": "Template does not exist"}, status=HTTPStatus.NOT_FOUND)
     t.delete()
     return JsonResponse({"success": True}, status=HTTPStatus.OK)
+
+
+# 

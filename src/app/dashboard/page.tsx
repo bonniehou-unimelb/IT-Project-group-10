@@ -1,130 +1,169 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
+import "@szhsin/react-menu/dist/index.css";
+import "@szhsin/react-menu/dist/transitions/zoom.css";
 
-{/* Dependencies required for drop down menu */}
-import { Menu, MenuItem, MenuButton } from '@szhsin/react-menu';
-import '@szhsin/react-menu/dist/index.css';
-import '@szhsin/react-menu/dist/transitions/zoom.css';
+const API_BACKEND_URL = "http://localhost:8000";
+
+export type TemplateSummary = {
+  templateId: number;
+  name: string;
+  version: number;
+  subjectCode: string;
+  year: number;
+  semester: number;
+  ownerName: string;
+  isPublishable: boolean;
+  isTemplate: boolean;
+};
 
 export default function Dashboard() {
-    const [search, setSearch] = useState("");
-    
-    return (
-        <div className="max-h-screen bg-gray-100">
-            <h1 className="text-3xl text-black font-bold translate-x-52 translate-y-15"> Welcome Back *username*!</h1>
+  const router = useRouter();
+  const [templateSum, setTemplateSum] = useState<TemplateSummary[]>([]);
+  const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+  const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
 
-            {/* Search Bar */}
-            <div className="translate-x-52 translate-y-17">
-              <div>
-                <form>
-                    <input
-                        id="search"
-                        type="text"
-                        value={search}
-                        onChange={(t) => setSearch(t.target.value)}
-                        className="pl-1 pr-1 py-3 min-w-240 bg-gray-200 border-gray-600 rounded-xl text-gray-900 hover:bg-gray-300"
-                        placeholder="🔍 Search"
-                        required
-                    />
-                    <button
-                        type="submit"
-                        className="translate-x-2 min-h-10 min-w-20 py-3 rounded-xl bg-blue-700 text-white font-semibold hover:bg-blue-800 disabled:opacity-50 shadow-lg transition"> 
-                        Submit
-                    </button>
-                </form>
-              </div>
+  useEffect(() => {
+    if (!username) return;
+    (async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const res = await fetch(
+          `${API_BACKEND_URL}/template/summary/?username=${encodeURIComponent(username)}`,
+          { method: "GET", credentials: "include" }
+        );
+        const data = (await res.json()) as { templates: TemplateSummary[] };
+        setTemplateSum(data.templates || []);
+      } catch {
+        setError("Failed to load dashboard information");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [username]);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex min-h-screen">
+        {/* Sidebar */}
+        <aside className="hidden md:flex md:w-64 md:flex-col bg-blue-900 text-white">
+          <div className="w-40 h-40 mx-auto flex items-center justify-center translate-y-2">
+            <span className="text-2xl text-white">
+              <Image src="icons/logo.svg" alt="University of Melbourne" width={200} height={200}/>
+            </span>
+          </div>
+          <nav className="mt-5 flex-1">
+            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">My Templates</button>
+            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">All Templates</button>
+            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Profile</button>
+          </nav>
+        </aside>
+
+        {/* Main column */}
+        <div className="flex-1 flex flex-col">
+          {/* Top bar */}
+          <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-200">
+            <div className={`${layout} py-3 flex items-center justify-between`}>
+                <div className="leading-tight">
+                <p className="text-xs sm:text-sm text-gray-500">Dashboard</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Welcome back!</h1>
+                </div>
+              <Menu
+                menuButton={<MenuButton className="px-3 py-2 rounded-md border">{username} ▿</MenuButton>}
+                transition
+              >
+                {/* TODO: Fix so it erases previous user information */}
+                <MenuItem
+                  onClick = {() => router.push('/login')}>
+                  Log Out
+                </MenuItem>
+              </Menu>
             </div>
+          </header>
 
-            {/* Create new template button */}
-            {/* TODO: Link to table creation page later */}
-            <button
+          {/* Content */}
+          <main className={`${layout} py-5`}>
+            <div className="flex justify-end">
+              <button
                 type="button"
-                className="translate-x-52 translate-y-20 text-white py-1 px-2 rounded-lg bg-blue-700 font-semibold hover:bg-blue-800 shadow-lg">
-                + Create New Template
-            </button>
-
-            {/* Navigation Table */}
-            {/* TODO: Fix so it reads this data from the sql. Just sample data in there at the moment*/}
-            <div className="translate-x-52 translate-y-25">
-                <table className="border-collapse border border-gray-300 table-auto">
-                    <thead>
-                        <tr>
-                            <th className="column-padding border text-left"> Template Name </th>
-                            <th className="column-padding border text-left"> Assessment </th>
-                            <th className="column-padding border text-left"> Subject </th>
-                            <th className="column-padding border text-left"> Creator </th>
-                            <th className="column-padding border text-left"> Actions </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td className="column-padding border text-left"> Template 1 </td>
-                            <td className="column-padding border text-left"> Assignment 1 </td>
-                            <td className="column-padding border text-left"> COMP30022 </td>
-                            <td className="column-padding border text-left"> John Smith </td>
-                            <td className="column-padding border text-left"> 
-                                <button 
-                                    type="submit"
-                                    className="rounded-xl border border-blue-900 font-semibold px-2 hover:bg-gray-200">
-                                    Preview
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="translate-x-1 rounded-xl border border-blue-900 font-semibold px-2 hover:bg-gray-200">
-                                    Duplicate
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
+                onClick={() => router.push("/templates/new")}
+              >
+                + Create New AI Use Scale
+              </button>
             </div>
 
-            {/* Top Panel */}
-            <div className="min-h-13 max-h-13 bg-white p-4 translate-x-50 -translate-y-45">
-                <p className="text-gray-500"> Dashboard </p>
-                <div className="float-right -translate-x-60 -translate-y-7">
-                    <Image
-                        src="icons/profile-filler.svg"
-                        alt="profile picture"
-                        width={30}
-                        height={30}
-                    />
-                    <div className="translate-x-8 -translate-y-6.5">
-                        <Menu menuButton={<MenuButton>*username* ▿</MenuButton>} transition>
-                            {/* TODO: Link this back to the log in page */}
-                            <MenuItem>Log Out</MenuItem>
-                        </Menu>
-                    </div>
-                </div>
-            </div>
+            {loading && (
+              <div className="mt-4 p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-900">
+                Loading…
+              </div>
+            )}
+            {error && (
+              <div className="mt-4 p-3 rounded-md bg-red-50 border border-red-200 text-red-900">
+                {error}
+              </div>
+            )}
 
-            {/* Side Menu */}
-            <div className="min-h-screen max-w-50 bg-blue-900 -translate-y-57">
-                <p className="font-bold text-xl text-white translate-x-6 translate-y-4"> ⚙️ Dashboard </p>
-                {/* Menu Buttons -- currently unimplemented. Should we make these go somewhere? */}
-                <div className="translate-y-10 hover:bg-blue-950">
-                    <button 
-                        type="button"
-                        className="text-white m-2">
-                        My Templates
-                    </button>
-                </div>
-                <div className="translate-y-11 hover:bg-blue-950">
-                    <button 
-                        type="button"
-                        className="text-white m-2">
-                        All Templates
-                    </button>
-                </div>
-                <div className="translate-y-11 hover:bg-blue-950">
-                    <button 
-                        type="button"
-                        className="text-white m-2">
-                        Profile
-                    </button>
-                </div>
+            {/* Table */}
+            <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white">
+                <table className="max-w table-auto text-sm">
+                <thead className="bg-gray-50">
+                  <tr className="text-left text-gray-700">
+                    <th className="px-4 py-3 font-medium w-[24rem]">Template Name</th>
+                    <th className="px-4 py-3 font-medium w-32">Subject Code</th>
+                    <th className="px-4 py-3 font-medium w-24 text-center">Semester</th>
+                    <th className="px-4 py-3 font-medium w-24 text-center">Year</th>
+                    <th className="px-4 py-3 font-medium w-24 text-center">Version</th>
+                    <th className="px-4 py-3 font-medium w-40">Creator Name</th>
+                    <th className="px-4 py-3 font-medium w-28">Type</th>
+                    <th className="px-4 py-3 font-medium w-28">Publishable?</th>
+                    <th className="px-4 py-3 font-medium w-44">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-100">
+                  {templateSum.length === 0 && (
+                    <tr>
+                      <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
+                        No templates yet.
+                      </td>
+                    </tr>
+                  )}
+
+                  {templateSum.map((tpl) => (
+                    <tr key={tpl.templateId} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 truncate">{tpl.name}</td>
+                      <td className="px-4 py-3">{tpl.subjectCode}</td>
+                      <td className="px-4 py-3 text-center">{tpl.semester}</td>
+                      <td className="px-4 py-3 text-center">{tpl.year}</td>
+                      <td className="px-4 py-3 text-center">v{tpl.version}</td>
+                      <td className="px-4 py-3">{tpl.ownerName || "NA"}</td>
+                      <td className="px-4 py-3">{tpl.isTemplate ? "Template" : "Instance"}</td>
+                      <td className="px-4 py-3">{tpl.isPublishable ? "Yes" : "No"}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-2">
+                          <button className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50">
+                            Preview
+                          </button>
+                          <button className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50">
+                            Duplicate
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          </main>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

@@ -6,17 +6,18 @@ from .models import User, Subject, Template, TemplateItem, TemplateOwnership, En
 from http import HTTPStatus
 import json
 import logging
+from django.db import IntegrityError
+import traceback
 
 logger = logging.getLogger(__name__)
 
 # ---- HELPER FUNCTIONS ---- #
-def resolve_ai_use_level(use_scale_key):
+def resolve_ai_use_level(use_scale_name):
     """
-    Accepts an AIUseScale primary key and resolves it to an AIUseScale object
+    Accepts an AIUseScale name and resolves it to an AIUseScale object
     """
-    if use_scale_key in (None, "", "null"):
-        return None
-    return AIUseScale.objects.get(code=str(use_scale_key).upper())
+    a, _ = AIUseScale.objects.get_or_create(name=use_scale_name)
+    return a
 
 def _body(request) -> dict:
     """
@@ -200,7 +201,10 @@ def create_or_update_template(request):
                 isTemplate=is_template,
             )
         TemplateOwnership.objects.create(ownerId=user, templateId=t)
-        return JsonResponse({"success": "template succesfully updated"}, status=HTTPStatus.OK)
+        return JsonResponse(
+            {"success": True, "templateId": t.id, "version": t.version},
+            status=HTTPStatus.CREATED,
+        )
     except:
         return JsonResponse({"error": "failed to update template"}, status=HTTPStatus.BAD_REQUEST)
 
@@ -209,33 +213,36 @@ def create_or_update_template(request):
 @csrf_exempt
 @require_POST
 def update_template_item(request):
-    """
-    Creates a new template item entry inside the requested template with the requested fields
-    """
     data = _body(request)
-    templateId = data.get("templateId")
-    task = data.get("task")
-    aiUseScaleLevel = data.get("aiUseScaleLevel")
-    aiUseScaleLevelObj = resolve_ai_use_level(aiUseScaleLevel)
-    instructionsToStudents = data.get("instructionsToStudents")
-    examples = data.get("examples")
-    aiGeneratedContent = data.get("aiGeneratedContent")
-    useAcknowledgement = data.get("useAcknowledgement")
+
+    template_id = data.get("templateId")
+    task = (data.get("task") or "").strip()
+    level_name = (data.get("aiUseScaleLevel_name")
+                  or data.get("aiUseScaleLevel")
+                  or "").strip()
+    instructions = data.get("instructionsToStudents") or ""
+    examples = data.get("examples") or ""
+    ai_content = data.get("aiGeneratedContent") or ""
+    ack = data.get("useAcknowledgement") or ""
 
     try:
-        t_item = TemplateItem.objects.create(
-            templateId=templateId,
-            task = task,
-            aiUseScaleLevel = aiUseScaleLevelObj,
-            instructionsToStudents = instructionsToStudents,
-            examples = examples,
-            aiGeneratedContent = aiGeneratedContent,
-            useAcknowledgement = useAcknowledgement
-        )
-        return JsonResponse({"success": "template item succesfully updated"}, status=HTTPStatus.OK)
-    except:
-        return JsonResponse({"error": "failed to update template item"}, status=HTTPStatus.BAD_REQUEST)
+        tpl = Template.objects.get(pk=int(template_id))
+        level_obj = resolve_ai_use_level(level_name) 
 
+        item = TemplateItem.objects.create(
+            templateId=tpl,
+            task=task,
+            aiUseScaleLevel=level_obj,
+            instructionsToStudents=instructions,
+            examples=examples,
+            aiGeneratedContent=ai_content,
+            useAcknowledgement=ack,
+        )
+        return JsonResponse({"success": True, "id": item.id}, status=HTTPStatus.CREATED)
+
+    except Exception as e:
+        logger.exception("Failed to create template item")
+        return JsonResponse({"error": f"{type(e).__name__}: {e}"}, status=HTTPStatus.BAD_REQUEST)
 
 # GET /template/summary/?username=...
 # returns summary of all templates owned by that user, includes all previous versions of the same template too
@@ -297,11 +304,17 @@ def template_details(request):
         TemplateItem.objects.filter(templateId=t)
         .select_related("aiUseScaleLevel")
         .values(
-            "id", "task", "instructionsToStudents", "examples",
-            "aiGeneratedContent", "useAcknowledgement",
-            "aiUseScaleLevel_id", "aiUseScaleLevel__code", "aiUseScaleLevel__title",
+            "id",
+            "task",
+            "instructionsToStudents",
+            "examples",
+            "aiGeneratedContent",
+            "useAcknowledgement",
+            "aiUseScaleLevel_id",
+            "aiUseScaleLevel__name",   
         )
     )
+
 
     for i in template_items:
         i["instructionsToStudents"] = _get_rid_of_escape_char(i.get("instructionsToStudents"))

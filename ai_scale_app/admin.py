@@ -22,18 +22,11 @@ class TemplateAdmin(admin.ModelAdmin):
     search_fields = ("name", "scope", "description")
     inlines = [TemplateItemInline]
 
-
-
 # --- The rest are fine as basic registrations ---
 admin.site.register(Subject)
 admin.site.register(Enrolment)
 admin.site.register(TemplateOwnership)
 admin.site.register(AcknowledgementForm)
 admin.site.register(AcknowledgementFormItem)
+admin.site.register(AIUseScale)
 
-@admin.register(AIUseScale)   
-class AIUseScaleAdmin(admin.ModelAdmin):
-    list_display = ("code", "title", "acknowledgement_required", "position")
-    list_filter = ("acknowledgement_required",)
-    search_fields = ("code", "title", "instructions", "acknowledgement_text")
-    ordering = ("position", "code")

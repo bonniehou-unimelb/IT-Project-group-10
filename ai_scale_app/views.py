@@ -157,8 +157,8 @@ def register(request):
                             status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 # POST /template/update/
-# body {username, name, scope, description, subject, version, isPublishable, isTemplate}
-# given version should be the old version number
+# body {username, name, scope, description, subject code, year, semester, version, isPublishable, isTemplate}
+# given version should be the current version number
 @csrf_exempt
 @require_POST
 def create_or_update_template(request):
@@ -166,25 +166,31 @@ def create_or_update_template(request):
     Creates a new template object with the updated fields with new version number
     """
     data = _body(request)
-    ownerId = data.get("username")
-    owner = User.objects.get(username=username)
+    username = data.get("username")
+    user = User.objects.get(username=username)
     name = data.get("name")
-    subject_id = data.get("subject")
+    subject_code = data.get("subjectCode")
+    year = data.get("year")
+    semester = data.get("semester")
     old_version_num = data.get("version", 0)
     scope = data.get("scope") or ""
     description = data.get("description") or ""
     is_publishable = data.get("isPublishable", False)
     is_template = data.get("isTemplate", False)
 
-    # Create a new subject if it doesn't exist yet
-    try:
-        subject = Subject.objects.get(pk=int(subject_id))
-    except (ValueError, Subject.DoesNotExist):
-        # TODO: create new subject
-        return JsonResponse({"error": "subject does not exist yet"}, status=HTTPStatus.BAD_REQUEST)
+
+    # Grab subject object based on code, year, semester
+    subject, _ = Subject.objects.get_or_create(
+        subjectCode=subject_code,
+        year=year,
+        semester=semester,
+        defaults={"name": ""}
+    )
+
+    # Create a new teplate object with new version number
     try:
         t = Template.objects.create(
-                ownerId=owner,
+                ownerId=user,
                 name=name,
                 subject=subject,
                 scope=scope,
@@ -193,7 +199,7 @@ def create_or_update_template(request):
                 isPublishable=is_publishable,
                 isTemplate=is_template,
             )
-        TemplateOwnership.objects.create(ownerId=t.owner, templateId=t)
+        TemplateOwnership.objects.create(ownerId=user, templateId=t)
         return JsonResponse({"success": "template succesfully updated"}, status=HTTPStatus.OK)
     except:
         return JsonResponse({"error": "failed to update template"}, status=HTTPStatus.BAD_REQUEST)

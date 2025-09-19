@@ -36,8 +36,18 @@ export default function AIGuidelinesBuilder() {
   const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
   const { data: payload, loading: detailLoading, error: detailErr, open, setData: setPayload } = useTemplateDetails(templateID);
   const [subjectCode, setSubjectCode] = useState<string>("");
-  const [semester, setSemester] = useState<number | string>("");
-  const [year, setYear] = useState<number | string>("");
+  const [semester, setSemester] = useState<number>(1);
+  const [year, setYear] = useState<number>(2025);
+  const [version, setVersion] = useState<number>(0);
+  const [isPublishable, setIsPublishable] = useState<boolean>(false);
+  const [isTemplate, setIsTemplate] = useState<boolean>(false);
+
+  // Save guidelines button states
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [templateId, setTemplateId] = useState<number | null>(null);
+  const [currentVersion, setCurrentVersion] = useState<number>(0);
+
   
   const [aiUseLevels, setAIUseLevels] = useState<AIUseLevel[]>([
     {
@@ -86,12 +96,15 @@ export default function AIGuidelinesBuilder() {
   const [isFetched, setIsFetched] = useState(false);
   useEffect(() => {
     if (payload && !isFetched) {
-      // Display template details
+      // Get the info to display for template details
       setGuidelinesTitle(payload.name ?? 'AI Use Guidelines for Assessment');
       setAssessmentType(payload.scope ?? 'Assignment');
       setSubjectCode(payload.subject?.code ?? "COMP10001");
       setSemester(payload.subject?.semester ?? "1");
       setYear(payload.subject?.year ?? "2025");
+      setVersion(payload.version ?? 0);
+      setIsPublishable(Boolean(payload.isPublishable));
+      setIsTemplate(Boolean(payload.isTemplate));
 
 
       // Map API template_items to table rows for display
@@ -144,6 +157,80 @@ export default function AIGuidelinesBuilder() {
     setGuidelinesTitle(template.name);
   };
 
+  async function handleSaveGuidelines() {
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      // Build a form object for input into createOrUpdateTemplateAction
+      const form = {
+        name: guidelinesTitle,
+        subjectCode: subjectCode,
+        year: Number(year),
+        semester: Number(semester),
+        scope: assessmentType,
+        description: "", 
+        version: Number(currentVersion), 
+        isPublishable: isPublishable,
+        isTemplate: isTemplate,
+      };
+
+      await new Promise<void>((resolve, reject) => {
+        const onSuccess = async ({ templateId, version }: { templateId: number; version: number }) => {
+          try {
+            setTemplateId(templateId);
+            setCurrentVersion(version);
+            setVersion(version);
+
+            // // Add all template items (updated or not) to the template just created
+            // const addItem = addTemplateItemAction(
+            //   templateId,
+            //   () => {}, 
+            //   (msg) => { throw new Error(msg); }
+            // );
+
+            // const addAll = aiUseLevels.map(
+            //   (level) =>
+            //     new Promise<void>((resItem, rejItem) => {
+            //       const addItemOnce = addTemplateItemAction(
+            //         templateId,
+            //         () => resItem(),
+            //         (msg) => rejItem(new Error(msg))
+            //       );
+            //       addItemOnce({
+            //         task: level.task ?? "",
+            //         aiUseScaleLevel: level.label ?? "",
+            //         instructionsToStudents: level.instructions ?? "",
+            //         examples: level.examples ?? "",
+            //         aiGeneratedContent: level.resources ?? "",
+            //         useAcknowledgement: level.acknowledgement ?? "",
+            //       });
+            //     })
+            // );
+
+            //await Promise.all(addAll);
+            resolve();
+          } catch (err) {
+            reject(err instanceof Error ? err : new Error(String(err)));
+          }
+        };
+
+        const onError = (msg: string) => reject(new Error(msg));
+
+        // Make API call to create new template object
+        const save = createOrUpdateTemplateAction(username, onSuccess, onError);
+        console.log("New template created.")
+        save(form);
+      });
+
+    } catch (e: any) {
+      setError(e?.message ?? "Error with updating template.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+
   return (
     <div className="flex h-[calc(100vh-120px)]">
       <AITemplateRepository onSelectTemplate={handleSelectTemplate} />
@@ -175,13 +262,22 @@ export default function AIGuidelinesBuilder() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="version">Version</Label>
+                <Input
+                  id="version"
+                  value={String(version)}
+                  onChange={(e) => setVersion(Number(e.target.value))}
+                  className="mt-1"
+                />
+              </div>
               <div>
                 <Label htmlFor="subject-code">Subject Code</Label>
                 <Input
                   id="subject-code"
-                  value={subjectCode}
-                  onChange={(e) => setSubjectCode(e.target.value)}
+                  value={String(subjectCode)}
+                  onChange={(e) => setSubjectCode(Number(e.target.value))}
                   className="mt-1"
                 />
               </div>
@@ -190,7 +286,7 @@ export default function AIGuidelinesBuilder() {
                 <Input
                   id="semester"
                   value={String(semester)}
-                  onChange={(e) => setSemester(e.target.value)}
+                  onChange={(e) => setSemester(Number(e.target.value))}
                   className="mt-1"
                 />
               </div>
@@ -199,12 +295,49 @@ export default function AIGuidelinesBuilder() {
                 <Input
                   id="year"
                   value={String(year)}
-                  onChange={(e) => setYear(e.target.value)}
+                  onChange={(e) => setYear(Number(e.target.value))}
                   className="mt-1"
                 />
               </div>
             </div>
-            
+
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="is-publishable">Publishable?</Label>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  id="is-publishable"
+                  type="checkbox"
+                  checked={isPublishable}
+                  onChange={(e) => setIsPublishable(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {isPublishable ? 'Yes' : 'No'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-end">
+          <div>
+            <Label htmlFor="is-template">Template?</Label>
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                id="is-template"
+                type="checkbox"
+                checked={isTemplate}
+                onChange={(e) => setIsTemplate(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <span className="text-sm text-muted-foreground">
+                {isTemplate ? 'Yes' : 'No'}
+              </span>
+            </div>
+          </div>
+        </div>
+        </div>
+
+
             <div className="flex justify-end">
               <Dialog>
                 <DialogTrigger asChild>
@@ -349,7 +482,7 @@ export default function AIGuidelinesBuilder() {
             </div>
             <div className="flex gap-2">
               <Button variant="outline">Export Guidelines</Button>
-              <Button>Save Guidelines</Button>
+              <Button onClick={handleSaveGuidelines} disabled={isSaving}>{isSaving ? "Saving…" : "Save guidelines"}</Button>
             </div>
           </div>
         </CardContent>

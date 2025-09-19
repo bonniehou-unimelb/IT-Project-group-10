@@ -59,7 +59,6 @@
     "model": "ai_scale_app.subject",
     "pk": 1,
     "fields": {
-      "coordinatorId": 2,
       "name": "Foundations of Computing",
       "subjectCode": "COMP10001",
       "semester": 1,
@@ -70,7 +69,6 @@
     "model": "ai_scale_app.subject",
     "pk": 2,
     "fields": {
-      "coordinatorId": 2,
       "name": "IT Project",
       "subjectCode": "COMP30022",
       "semester": 2,
@@ -81,7 +79,6 @@
     "model": "ai_scale_app.subject",
     "pk": 3,
     "fields": {
-      "coordinatorId": 2,
       "name": "Database Systems",
       "subjectCode": "COMP20008",
       "semester": 2,
@@ -92,7 +89,6 @@
     "model": "ai_scale_app.subject",
     "pk": 4,
     "fields": {
-      "coordinatorId": 3,
       "name": "Principles of Finance",
       "subjectCode": "FNCE10002",
       "semester": 1,
@@ -103,7 +99,6 @@
     "model": "ai_scale_app.subject",
     "pk": 5,
     "fields": {
-      "coordinatorId": 3,
       "name": "Competition and Strategy",
       "subjectCode": "ECON20005",
       "semester": 2,

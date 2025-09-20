@@ -45,7 +45,6 @@ python manage.py migrate
 ```
 4. Load data into database (in root directory)
 ```bash
-python manage.py generate_ai_use_scales
 python manage.py loaddata ai_scale_app/table_data/dummy_data.json
 python manage.py hash_passwords
 ```

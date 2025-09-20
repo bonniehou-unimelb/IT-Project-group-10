@@ -12,14 +12,24 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT)
 
 class Subject(models.Model):
-    coordinatorId = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    subjectCode = models.CharField(max_length=10, unique=True)
+    subjectCode = models.CharField(max_length=10)
     semester = models.PositiveSmallIntegerField()
     year = models.PositiveSmallIntegerField()
+    name = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["subjectCode", "year", "semester"],
+                name="unique_subject_code_year_semester",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["subjectCode", "year", "semester"]),
+        ]
 
     def __str__(self):
-        return f"{self.name}, {self.subjectCode}"
+        return f"{self.name}, {self.subjectCode}, year {self.year}, semester {self.semester}"
 
 
 class Enrolment(models.Model):
@@ -69,35 +79,11 @@ class TemplateOwnership(models.Model):
     def __str__(self):
         return f"{self.ownerId} owns {self.templateId}"
 
-class AIUseScale(models.Model):
-    class Code(models.TextChoices):
-        N  = "N",  "Level N"
-        R1 = "R1", "Level R1"
-        R2 = "R2", "Level R2"
-        G  = "G",  "Level G"
-
-    code  = models.CharField(max_length=3, choices=Code.choices, unique=True)
-    title = models.CharField(max_length=120)                
-
-    instructions = models.TextField(blank=True)          
-
-    acknowledgement_required = models.BooleanField(default=False)
-    acknowledgement_text     = models.TextField(blank=True)
-    acknowledgement_url      = models.URLField(blank=True)
-
-    position = models.PositiveSmallIntegerField(default=0)  
-    color    = models.CharField(max_length=7, blank=True, help_text="Optional hex (e.g., #FF6B6B)")
-
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering  = ["position", "code"]
-        indexes   = [models.Index(fields=["code"])]
-        verbose_name = "AI Use Scale"
-        verbose_name_plural = "AI Use Scales"
+class AIUseScale(models.Model):            
+    name = models.TextField(unique=True)          
 
     def __str__(self):
-        return f"{self.get_code_display()} — {self.title}"  
+        return f"{self.name}"  
 
 
 
@@ -111,7 +97,7 @@ class TemplateItem(models.Model):
     instructionsToStudents = models.TextField(blank=True, null=True)
     examples = models.TextField(blank=True, null=True)
     aiGeneratedContent = models.TextField(blank=True, null=True)
-    useAcknowledgement = models.BooleanField(default=False)
+    useAcknowledgement = models.TextField(default=False)
 
     class Meta:
         indexes = [models.Index(fields=["templateId"])]

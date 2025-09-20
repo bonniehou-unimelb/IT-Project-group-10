@@ -28,6 +28,10 @@ export default function Dashboard() {
   const [error, setError] = useState<string>("");
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
 
+  const handleRowClick = (template_id: number) => {
+    router.push(`/?template_id=${template_id}`);
+  };
+
   useEffect(() => {
     if (!username) return;
     (async () => {
@@ -137,7 +141,7 @@ export default function Dashboard() {
                   )}
 
                   {templateSum.map((tpl) => (
-                    <tr key={tpl.templateId} className="hover:bg-gray-50">
+                    <tr key={tpl.templateId} className="hover:bg-gray-50" onClick={() => handleRowClick(tpl.templateId)}>
                       <td className="px-4 py-3 truncate">{tpl.name}</td>
                       <td className="px-4 py-3">{tpl.subjectCode}</td>
                       <td className="px-4 py-3 text-center">{tpl.semester}</td>

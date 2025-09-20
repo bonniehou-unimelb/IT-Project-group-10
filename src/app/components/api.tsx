@@ -28,7 +28,7 @@ export type TemplateDetails = {
   name: string;
   version: number;
   ownerId: number;
-  subject: { id: number; code: string; name: string ; semester: number; year: number};
+  subject: { code: string; name: string | null ; semester: number; year: number};
   scope: string;
   description: string;
   isPublishable: boolean;
@@ -79,17 +79,18 @@ export function useTemplateDetails(templateID: number) {
 
 export type NewVersionForm = {
   name: string;
-  subjectId: number;
+  subjectCode: string;
+  year: number;
+  semester: number;
   scope?: string;
   description?: string;
+  version?: number;
   isPublishable?: boolean;
   isTemplate?: boolean;
 };
 
 export function createOrUpdateTemplateAction(
   username: string,
-  currentVersion: number,
-  currentSubjectId: number,
   onSuccess: (result: { templateId: number; version: number }) => void,
   onError: (msg: string) => void
 ) {
@@ -97,8 +98,10 @@ export function createOrUpdateTemplateAction(
     const payload = {
       username,
       name: form.name,
-      subject: form.subjectId ?? currentSubjectId,
-      version: currentVersion, // server increments
+      subjectCode: form.subjectCode ,
+      year: form.year,
+      semester: form.semester ,
+      version: form.version,
       scope: form.scope,
       description: form.description,
       isPublishable: form.isPublishable,
@@ -113,10 +116,10 @@ export function createOrUpdateTemplateAction(
     })
       .then(async (res) => {
         const body = await parseJSON<{ success?: boolean; templateId?: number; version?: number; error?: string }>(res);
-        if (body?.templateId && typeof body.version === "number") {
+        if (body?.templateId && body?.version) {
           onSuccess({ templateId: body.templateId, version: body.version });
         } else {
-          onError(body?.error ?? "failed to create/update template");
+          onError(body?.error ?? "Failed to create/update template");
         }
       })
       .catch((e) => onError(String(e?.message ?? e)));
@@ -125,20 +128,17 @@ export function createOrUpdateTemplateAction(
 
 export type NewItem = {
   task: string;
-  aiUseScaleLevel?: string | null;
+  aiUseScaleLevel_name?: string;
   instructionsToStudents?: string;
   examples?: string;
   aiGeneratedContent?: string;
   useAcknowledgement?: string;
 };
 
-export function addTemplateItemAction(
-  templateId: number,
-  onSuccess: () => void,
-  onError: (msg: string) => void
-) {
-  return (item: NewItem) => {
-    fetch(`${API_BACKEND_URL}/templateitem/update`, {
+
+export function addTemplateItemAction(templateId: number) {
+  return (item: NewItem): Promise<void> => {
+    return fetch(`${API_BACKEND_URL}/templateitem/update/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -146,12 +146,16 @@ export function addTemplateItemAction(
     })
       .then(async (res) => {
         const body = await parseJSON<{ success?: boolean; error?: string }>(res);
-        if (body?.success) onSuccess();
-        else onError(body?.error ?? "failed to add template item");
-      })
-      .catch((e) => onError(String(e?.message ?? e)));
+        console.log(body);
+
+        if (!res.ok || !body?.success) {
+          throw new Error(body?.error ?? `HTTP ${res.status}`);
+        }
+      });
   };
 }
+
+
 
 export function deleteTemplateAction(
   templateId: number,

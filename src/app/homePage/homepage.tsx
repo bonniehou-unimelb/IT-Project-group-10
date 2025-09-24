@@ -21,7 +21,7 @@ import {
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
-  userRole: 'subjectCoord' | 'student';
+  userRole: 'subjectCoord' | 'student' | 'tutor' | 'systemAdmin'; 
   userName: string;
 }
 
@@ -48,14 +48,24 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
     },
     student: {
       allSubjects: [
-        { name: 'Literature Studies', code: 'LIT201', instructor: 'Dr. Smith', templates: 2, deadline: 'Tomorrow', semester: 'Semester 1 2025' },
-        { name: 'Chemistry 101', code: 'CHEM101', instructor: 'Prof. Johnson', templates: 1, deadline: '3 days', semester: 'Semester 1 2025' },
-        { name: 'Business Ethics', code: 'BUS301', instructor: 'Dr. Williams', templates: 2, deadline: '1 week', semester: 'Semester 1 2025' },
-        { name: 'Statistics', code: 'STAT200', instructor: 'Dr. Brown', templates: 1, deadline: '2 weeks', semester: 'Semester 1 2025' },
-        { name: 'Computer Science Fundamentals', code: 'CS101', instructor: 'Dr. Garcia', templates: 3, deadline: '3 weeks', semester: 'Semester 1 2025' },
-        { name: 'Introduction to Philosophy', code: 'PHIL101', instructor: 'Prof. Lee', templates: 1, deadline: '1 month', semester: 'Semester 1 2025' },
-        { name: 'Art History', code: 'ART201', instructor: 'Dr. Chen', templates: 2, deadline: '2 weeks', semester: 'Semester 1 2025' },
-        { name: 'Calculus I', code: 'MATH151', instructor: 'Prof. Davis', templates: 4, deadline: '5 days', semester: 'Semester 1 2025' }
+        { name: 'Elements of Data Processing', code: 'COMP20008', templates: 2, deadline: 'Tomorrow', semester: 'Semester 1 2025' },
+        { name: 'Linear Algebra', code: 'MAST10007', templates: 1, deadline: '3 days', semester: 'Semester 1 2025' },
+      ]
+    },
+
+    tutor: {
+      allSubjects: [
+        { name: 'Foundations of Computing', code: 'COMP10001', students: 28, templates: 3, semester: 'Semester 1 2025' },
+        { name: 'Models of Computation', code: 'COMP30026', students: 45, templates: 2, semester: 'Semester 1 2025' },
+        { name: 'Competition and Strategy', code: 'ECON20005', students: 32, templates: 3, semester: 'Semester 1 2025' },
+ 
+      ]
+    },
+
+    systemAdmin: {
+      allSubjects: [
+        { name: 'Foundations of Computing', code: 'COMP10001', students: 28, templates: 3, semester: 'Semester 1 2025' },
+      
       ]
     }
   });
@@ -74,6 +84,22 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
       upcomingDeadlines: 2,
       subjects: subjectsData.student.allSubjects.slice(0, 4),
       allSubjects: subjectsData.student.allSubjects
+    },
+
+    tutor: {
+      enrolledSubjects: 4,
+      assignedTemplates: 6,
+      upcomingDeadlines: 2,
+      subjects: subjectsData.tutor.allSubjects.slice(0, 4),
+      allSubjects: subjectsData.tutor.allSubjects
+    },
+
+    systemAdmin: {
+      enrolledSubjects: 4,
+      assignedTemplates: 6,
+      upcomingDeadlines: 2,
+      subjects: subjectsData.systemAdmin.allSubjects.slice(0, 4),
+      allSubjects: subjectsData.systemAdmin.allSubjects
     }
   };
 
@@ -108,7 +134,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
 
   return (
     <div className="flex-1 max-w-7xl mx-auto p-6">
-      {/* Welcome Section for all users */}
+      {/* Welcome Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
@@ -117,10 +143,20 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
             </h1>
             <p className="text-muted-foreground">
               {userRole === 'subjectCoord' 
+              /*Still need to add logic for system admin */
                 ? 'Manage your AI guidelines and help students understand appropriate AI use.'
                 : 'Stay up to date with AI guidelines for your assessments and coursework.'
               }
             </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm">
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications
+            </Button>
+            <Avatar>
+              <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
           </div>
         </div>
       </div>

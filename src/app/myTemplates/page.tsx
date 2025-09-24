@@ -99,37 +99,13 @@ export default function Dashboard() {
                   </tr>
                 </thead>
 
+                {/* TODO: Fix so it only shows templates made by this user (I've kept it empty for now) */}
                 <tbody className="divide-y divide-gray-100">
-                  {templateSum.length === 0 && (
                     <tr>
-                      <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
-                        No templates yet.
-                      </td>
+                        <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
+                            No templates yet.
+                        </td>
                     </tr>
-                  )}
-
-                  {templateSum.map((tpl) => (
-                    <tr key={tpl.templateId} className="hover:bg-gray-50" onClick={() => handleRowClick(tpl.templateId)}>
-                      <td className="px-4 py-3 truncate">{tpl.name}</td>
-                      <td className="px-4 py-3">{tpl.subjectCode}</td>
-                      <td className="px-4 py-3 text-center">{tpl.semester}</td>
-                      <td className="px-4 py-3 text-center">{tpl.year}</td>
-                      <td className="px-4 py-3 text-center">v{tpl.version}</td>
-                      <td className="px-4 py-3">{tpl.ownerName || "NA"}</td>
-                      <td className="px-4 py-3">{tpl.isTemplate ? "Template" : "Instance"}</td>
-                      <td className="px-4 py-3">{tpl.isPublishable ? "Yes" : "No"}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-2">
-                          <button className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50">
-                            Preview
-                          </button>
-                          <button className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50">
-                            Duplicate
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
                 </tbody>
               </table>
             </div>

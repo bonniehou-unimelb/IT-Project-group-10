@@ -63,6 +63,7 @@ export default function Dashboard() {
             </span>
           </div>
           <nav className="mt-5 flex-1">
+            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Home</button>
             <button className="w-full text-left px-6 py-3 hover:bg-blue-950">My Templates</button>
             <button className="w-full text-left px-6 py-3 hover:bg-blue-950">All Templates</button>
             <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Profile</button>

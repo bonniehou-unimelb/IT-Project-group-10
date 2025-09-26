@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/zoom.css";
+import { useAuth } from "../authentication/auth";
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -22,24 +23,40 @@ export type TemplateSummary = {
 
 export default function Dashboard() {
   const router = useRouter();
+  const { user, pageLoading, refresh } = useAuth();
   const [templateSum, setTemplateSum] = useState<TemplateSummary[]>([]);
   const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
 
+  // Reroute to log in page if user session invalid
+  useEffect(() => {
+    if (!pageLoading && !user) router.replace("/login");
+  }, [pageLoading, user, router]);
+
+  useEffect(() => { refresh(); }, []); 
+
   const handleRowClick = (template_id: number) => {
     router.push(`/?template_id=${template_id}`);
   };
 
+  // Fetch cookie for user session
   useEffect(() => {
-    if (!username) return;
+    if (!user) return;
+    fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" })
+      .catch(() => {/* ignore */});
+  }, [user]);
+
+  // Fetch summary details of the templates the current user owns
+  useEffect(() => {
+    if (!username || !user) return; 
     (async () => {
       try {
         setLoading(true);
         setError("");
         const res = await fetch(
-          `${API_BACKEND_URL}/template/summary/?username=${encodeURIComponent(username)}`,
+          `${API_BACKEND_URL}/template/summary/?username=${encodeURIComponent(user.username)}`,
           { method: "GET", credentials: "include" }
         );
         const data = (await res.json()) as { templates: TemplateSummary[] };
@@ -79,7 +96,7 @@ export default function Dashboard() {
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Welcome back!</h1>
                 </div>
               <Menu
-                menuButton={<MenuButton className="px-3 py-2 rounded-md border">{username} ▿</MenuButton>}
+                menuButton={<MenuButton className="px-3 py-2 rounded-md border">{user.username} ▿</MenuButton>}
                 transition
               >
                 {/* TODO: Fix so it erases previous user information */}

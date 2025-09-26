@@ -198,20 +198,18 @@ export default function AIGuidelinesBuilder() {
             // Add all template items (updated or not) to the template just created
             // Call addTemplateItemAction to add the item for every row in the guidelines form
             const addItemOnce = (item: {
-              task?: string;
-              aiUseScaleLevel?: string;
-              instructionsToStudents?: string;
-              examples?: string;
-              aiGeneratedContent?: string;
-              useAcknowledgement?: boolean;
-              }) =>
+              task: string;
+              aiUseScaleLevel: string;
+              instructionsToStudents: string;
+              examples: string;
+              aiGeneratedContent: string;
+              useAcknowledgement: boolean;
+            }) =>
                 new Promise<void>((resolve, reject) => {
                   const addItem = addTemplateItemAction(
-                    templateId,
-                    () => resolve(),
-                    (msg) => reject(new Error(msg))
+                    templateId
                   );
-                  addItem(item);
+                  addItem({ ...item, useAcknowledgement: String(item.useAcknowledgement ?? false) });
                   console.log("added an item to template");
                 });
 

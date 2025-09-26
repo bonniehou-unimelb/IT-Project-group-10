@@ -25,7 +25,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { user, pageLoading, refresh } = useAuth();
   const [templateSum, setTemplateSum] = useState<TemplateSummary[]>([]);
-  const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
+  const [username, setUsername] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
@@ -36,6 +36,10 @@ export default function Dashboard() {
   }, [pageLoading, user, router]);
 
   useEffect(() => { refresh(); }, []); 
+
+  useEffect(() => {
+    if (user?.username) setUsername(user.username);
+  }, [user]);
 
   const handleRowClick = (template_id: number) => {
     router.push(`/?template_id=${template_id}`);

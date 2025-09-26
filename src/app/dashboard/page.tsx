@@ -69,6 +69,8 @@ export default function Dashboard() {
     })();
   }, [username]);
 
+  const displayName = user?.username ?? "Account";
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen">
@@ -96,7 +98,7 @@ export default function Dashboard() {
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Welcome back!</h1>
                 </div>
               <Menu
-                menuButton={<MenuButton className="px-3 py-2 rounded-md border">{user.username} ▿</MenuButton>}
+                menuButton={<MenuButton className="px-3 py-2 rounded-md border">{displayName} ▿</MenuButton>}
                 transition
               >
                 {/* TODO: Fix so it erases previous user information */}

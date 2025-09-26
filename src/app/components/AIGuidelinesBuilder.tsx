@@ -161,8 +161,8 @@ export default function AIGuidelinesBuilder() {
     ));
   };
 
-  const handleSelectTemplate = (template: TemplateScale) => {
-    const newLevels = template.levels.map((level, index) => ({
+  const handleSelectTemplate = (template: any) => {
+    const newLevels = (template.levels ?? []).map((level: any, index: number) => ({
       ...level,
       id: (Date.now() + index).toString()
     }));

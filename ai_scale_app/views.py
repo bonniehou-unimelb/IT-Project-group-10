@@ -4,6 +4,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login as auth_login
 from .models import User, Subject, Template, TemplateItem, TemplateOwnership, Enrolment, AIUseScale
 from http import HTTPStatus
+from django.contrib.auth import logout as auth_logout
+from django.middleware.csrf import get_token
 import json
 import logging
 from django.db import IntegrityError
@@ -64,6 +66,20 @@ def user_details(request):
         "role": user.role,
     }, status=HTTPStatus.OK)
 
+# GET /session/
+@require_GET
+def curr_user_session(request):
+    """
+    Return the user session if user is authenticated already
+    """
+    if request.user.is_authenticated:
+        curr_user = request.user
+        return JsonResponse({"isAuthenticated": True, "user": {
+            "username": curr_user.username, "role": getattr(curr_user, "role", None)
+        }}, status=HTTPStatus.OK)
+    return JsonResponse({"isAauthenticated": False}, status=HTTPStatus.UNAUTHORIZED)
+
+
 # GET /info/taught_subjects/?username=...
 @require_GET
 def enrolment_teaching(request):
@@ -89,7 +105,7 @@ def enrolment_teaching(request):
     return JsonResponse({"taught_subjects": []}, status=HTTPStatus.OK)
 
 # POST /auth/login/   body: JSON or form {username, password}
-@csrf_exempt  # remove when your frontend sends CSRF tokens
+@csrf_exempt
 @require_POST
 def user_login(request):
     """
@@ -119,7 +135,6 @@ def user_login(request):
                             status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 # POST /auth/register/  body: JSON or form {username, password, first_name, last_name, role}
-@csrf_exempt
 @require_POST
 def register(request):
     """
@@ -157,10 +172,28 @@ def register(request):
         return JsonResponse({"success": False, "error": "Server error occurred"},
                             status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
+# GET /token/
+@require_GET
+def csrf_token(request):
+    """
+    Set the user session token
+    """
+    return JsonResponse({"csrfToken": get_token(request)}, status = HTTPStatus.OK)
+
+
+# POST /logout/
+@require_POST
+def user_logout(request):
+    """
+    Exits the user session
+    """
+    auth_logout(request)
+    return JsonResponse({"success": True}, status=HTTPStatus.OK)
+
+
 # POST /template/update/
 # body {username, name, scope, description, subject code, year, semester, version, isPublishable, isTemplate}
 # given version should be the current version number
-@csrf_exempt
 @require_POST
 def create_or_update_template(request):
     """
@@ -210,7 +243,6 @@ def create_or_update_template(request):
 
 # POST /templateitem/update
 # body {templateId, task, aiUseScaleLevel, instructionsToStudents, examples,aiGeneratedContent, useAcknowledgement}
-@csrf_exempt
 @require_POST
 def update_template_item(request):
     data = _body(request)
@@ -350,7 +382,6 @@ def template_details(request):
 
 # POST /template/delete/    body={"templateId": ...}
 # DELETE a template by its id, also delete its template items
-@csrf_exempt
 @require_POST
 def delete_template(request):
     data = _body(request)

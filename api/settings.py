@@ -77,9 +77,12 @@ WSGI_APPLICATION = "api.wsgi.application"
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]  # React frontend App
 CSRF_TRUSTED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
 CORS_ALLOW_CREDENTIALS = True
+SESSION_COOKIE_NAME = "sessionid"
+CSRF_COOKIE_NAME = "csrftoken"
 SESSION_COOKIE_SAMESITE = "Lax"   
 SESSION_COOKIE_SECURE = False     
 CSRF_COOKIE_SECURE = False    
+
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

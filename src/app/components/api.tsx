@@ -4,6 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 
 const API_BACKEND_URL = "http://localhost:8000";
 
+// Fetch cookie in current user session
+function getCookie(name: string) {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(^|; )${name}=([^;]*)`));
+  return m ? decodeURIComponent(m[2]) : null;
+}
+
 export type UserInfo = {
   first_name: string;
   last_name: string;
@@ -40,9 +47,7 @@ export type TemplateDetails = {
     examples: string;
     aiGeneratedContent: string;
     useAcknowledgement: string;
-    aiUseScaleLevel_id: number | null;
-    aiUseScaleLevel__code: string | null;
-    aiUseScaleLevel__title: string | null;
+    aiUseScaleLevel__name: string | null;
   }>;
 };
 
@@ -108,9 +113,14 @@ export function createOrUpdateTemplateAction(
       isTemplate: form.isTemplate,
     };
 
+    const csrftoken = getCookie("csrftoken");
     fetch(`${API_BACKEND_URL}/template/update/`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken ?? "",
+        "X-Requested-With": "XMLHttpRequest",
+      },
       credentials: "include",
       body: JSON.stringify(payload),
     })
@@ -137,10 +147,15 @@ export type NewItem = {
 
 
 export function addTemplateItemAction(templateId: number) {
+  const csrftoken = getCookie("csrftoken");
   return (item: NewItem): Promise<void> => {
     return fetch(`${API_BACKEND_URL}/templateitem/update/`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken ?? "",
+        "X-Requested-With": "XMLHttpRequest",
+      },
       credentials: "include",
       body: JSON.stringify({ templateId, ...item }),
     })

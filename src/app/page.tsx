@@ -1,4 +1,5 @@
 import AIGuidelinesBuilder from './components/AIGuidelinesBuilder';
+import {Suspense} from 'react';
 /*
 export default function Page() {
   return <div>Test</div>;
@@ -14,7 +15,9 @@ export default function App() {
         </div>
       </div>
       <div className="flex-1">
-        <AIGuidelinesBuilder />
+        <Suspense>
+          <AIGuidelinesBuilder />
+        </Suspense>
       </div>
     </div>
   );

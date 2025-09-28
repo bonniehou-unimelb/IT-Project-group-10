@@ -32,7 +32,6 @@ function SideBar() {
                 >
                     All Templates
                 </button>
-                <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Profile</button>
                 </nav>
         </aside>
     );

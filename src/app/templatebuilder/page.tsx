@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import AIGuidelinesBuilder from './components/AIGuidelinesBuilder';
-import { Button } from './components/button';
+import AIGuidelinesBuilder from '../components/AIGuidelinesBuilder';
+import { Button } from '../components/button';
 import { ArrowLeft } from 'lucide-react';
 import {
   AlertDialog,
@@ -13,7 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from './components/alert-dialog';
+} from '../components/alert-dialog';
 
 export default function App() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);

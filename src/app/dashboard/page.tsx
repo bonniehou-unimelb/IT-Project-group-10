@@ -175,12 +175,38 @@ export default function Dashboard() {
                       <td className="px-4 py-3">{tpl.isPublishable ? "Yes" : "No"}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
-                          <button className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50">
-                            Preview
-                          </button>
-                          <button className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50">
-                            Duplicate
-                          </button>
+                          <button
+                          className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
+                          onClick={(e) => {
+                            e.stopPropagation(); 
+                            router.push(`/?template_id=${tpl.templateId}`); 
+                          }}
+                        >
+                          Preview
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50"
+                          onClick={async (e) => {
+                            e.stopPropagation(); // prevent row click
+                            try {
+                              const res = await fetch(`${API_BACKEND_URL}/template/duplicate/`, {
+                                method: "POST",
+                                credentials: "include",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ templateId: tpl.templateId }),
+                              });
+                              if (!res.ok) throw new Error("Failed to duplicate template");
+
+                              const data = await res.json();
+                              setTemplateSum((prev) => [data.new_template, ...prev]);
+                            } catch (err) {
+                              console.error(err);
+                              alert("Failed to duplicate template");
+                            }
+                          }}
+                        >
+                          Duplicate
+                        </button>
                         </div>
                       </td>
                     </tr>

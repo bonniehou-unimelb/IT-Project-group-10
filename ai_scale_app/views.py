@@ -394,5 +394,93 @@ def delete_template(request):
     t.delete()
     return JsonResponse({"success": True}, status=HTTPStatus.OK)
 
+@csrf_exempt
+@require_POST
+def duplicate_template(request):
+    # Creates a copy of an existing template for the same owner, appending (1), (2), etc to the name
+    data = _body(request)
+    template_id = data.get("templateId")
 
-# 
+    if not template_id:
+        return JsonResponse({"error": "templateId is required"}, status=HTTPStatus.BAD_REQUEST)
+
+    try:
+        from .models import Template, TemplateItem, AcknowledgementForm, AcknowledgementFormItem, TemplateOwnership
+        import re
+
+        original = Template.objects.get(pk=int(template_id))
+
+        # strip (n) if already in name
+        base_name = re.sub(r" \(\d+\)$", "", original.name)
+
+        # find existing duplicates for this owner
+        existing_names = Template.objects.filter(ownerId=original.ownerId, name__startswith=base_name).values_list("name", flat=True)
+        max_num = 0
+        for name in existing_names:
+            match = re.search(r"\((\d+)\)$", name)
+            if match:
+                max_num = max(max_num, int(match.group(1)))
+
+        new_name = f"{base_name} ({max_num+1})"
+
+        # create new Template
+        new_template = Template.objects.create(
+            ownerId=original.ownerId,
+            name=new_name,
+            scope=original.scope,
+            description=original.description,
+            subject=original.subject,
+            version=original.version,
+            isPublishable=original.isPublishable,
+            isTemplate=original.isTemplate,
+        )
+        TemplateOwnership.objects.create(templateId=new_template, ownerId=original.ownerId)
+
+        # duplicate TemplateItems
+        for item in TemplateItem.objects.filter(templateId=original):
+            TemplateItem.objects.create(
+                templateId=new_template,
+                task=item.task,
+                aiUseScaleLevel=item.aiUseScaleLevel,
+                instructionsToStudents=item.instructionsToStudents,
+                examples=item.examples,
+                aiGeneratedContent=item.aiGeneratedContent,
+                useAcknowledgement=item.useAcknowledgement,
+            )
+
+        # duplicate AcknowledgementForms and Items
+        for form in AcknowledgementForm.objects.filter(templateId=original):
+            new_form = AcknowledgementForm.objects.create(
+                templateId=new_template,
+                name=form.name,
+                subject=form.subject,
+            )
+            for form_item in AcknowledgementFormItem.objects.filter(ackFormId=form):
+                AcknowledgementFormItem.objects.create(
+                    ackFormId=new_form,
+                    aiToolsUsed=form_item.aiToolsUsed,
+                    purposeUsage=form_item.purposeUsage,
+                    keyPromptsUsed=form_item.keyPromptsUsed,
+                )
+
+        return JsonResponse({
+            "success": True,
+            "new_template": {
+                "templateId": new_template.id,
+                "name": new_template.name,
+                "version": new_template.version,
+                "subjectCode": new_template.subject.subjectCode if new_template.subject else "",
+                "year": new_template.subject.year if new_template.subject else None,
+                "semester": new_template.subject.semester if new_template.subject else None,
+                "ownerName": f"{new_template.ownerId.first_name} {new_template.ownerId.last_name}".strip(),
+                "isPublishable": bool(new_template.isPublishable),
+                "isTemplate": bool(new_template.isTemplate),
+            }
+        }, status=HTTPStatus.CREATED)
+
+
+    except Template.DoesNotExist:
+        return JsonResponse({"error": "Template is non-existent"}, status=HTTPStatus.NOT_FOUND)
+    except Exception as e:
+        logger.exception("Unable to duplicate template")
+        return JsonResponse({"error": str(e)}, status=HTTPStatus.BAD_REQUEST)

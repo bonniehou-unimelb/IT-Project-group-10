@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ScrollArea } from '../components/scroll-area';
 import { Input } from '../components/input';
 import { Label } from '../components/label';
+import Image from 'next/image';
 
 import { 
   FileText, Plus, BookOpen, Users, Clock, TrendingUp, ArrowRight, Settings, Bell
@@ -18,7 +19,7 @@ import {
 
 type UserRole = 'subjectCoord' | 'student' | 'systemAdmin';
 
-/* Defining the structure of data for each role */
+/* Defining the attributes for each user type */
 interface SubjectCoordData {
   myTemplates: number;
   activeTemplates: number;
@@ -150,48 +151,121 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
 
 
   return (
-    <div className="flex-1">
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Welcome Section */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome back, {userName.split(' ')[0]} 👋
-            </h1>
-
-            <p className="text-lg text-muted-foreground">
-              {userRole === 'subjectCoord'
-                ? 'Manage your AI guidelines and help students understand appropriate AI use.'
-                : 'View AI guidelines for your assessments.'
-              }
-            </p>
-
-            {/* Quick Stats */}
-            {data.role === 'subjectCoord' && (
-              <SubjectCoordStats data={data.data} />
-            )}
-            {data.role === 'student' && (
-              <StudentStats data={data.data} />
-            )}
-            {data.role === 'systemAdmin' && (
-              <SystemAdminStats data={data.data} />
-            )}
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex min-h-screen">
+        {/* Sidebar */}
+        <aside className="hidden md:flex md:w-64 md:flex-col bg-blue-900 text-white">
+          <div className="w-40 h-40 mx-auto flex items-center justify-center translate-y-2">
+            <Image src="icons/logo.svg" alt="University of Melbourne" width={200} height={200}/>
           </div>
+          <nav className="mt-5 flex-1">
+            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Home</button>
+            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">My Templates</button>
+            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">All Templates</button>
+            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Profile</button>
+          </nav>
+        </aside>
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" className="relative">
-              <Bell className="h-4 w-4 mr-2" />
-              Notifications
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full"></span>
-            </Button>
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {userName.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+        {/* Main Content */}
+        <div className="flex-1">
+          <div className="max-w-7xl mx-auto p-6">
+            {/* Homepage welcome Section */}
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  Welcome back, {userName.split(' ')[0]} 👋
+                </h1>
+                <p className="text-lg text-muted-foreground">
+                  {userRole === 'subjectCoord'
+                    ? 'Manage your AI guidelines and help students understand appropriate AI use.'
+                    : 'View AI guidelines for your assessments.'}
+                </p>
+              </div>
+
+              {/* Notifications */}
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" className="relative">
+                  <Bell className="h-4 w-4 mr-2" />
+                  Notifications
+                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full"></span>
+                </Button>
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {userName.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            </div>
+
+            {/* Two Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="h-5 w-5 text-primary" />
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {userRole === 'subjectCoord' ? (
+                    <>
+                      <Button 
+                        className="w-full justify-start h-12 bg-primary text-primary-foreground hover:bg-primary/90" 
+                        onClick={() => onNavigate('create-template')}
+                      >
+                        <Plus className="h-4 w-4 mr-3" />
+                        Create New AI Guidelines
+                      </Button>
+                      <Button 
+                        className="w-full justify-start h-11" 
+                        variant="outline"
+                        onClick={() => onNavigate('my-templates')}
+                      >
+                        <FileText className="h-4 w-4 mr-3" />
+                        View My Templates
+                      </Button>
+                      <Button 
+                        className="w-full justify-start h-11" 
+                        variant="outline"
+                        onClick={() => onNavigate('all-templates')}
+                      >
+                        <BookOpen className="h-4 w-4 mr-3" />
+                        Browse All Templates
+                      </Button>
+                      <Button 
+                        className="w-full justify-start h-11" 
+                        variant="outline"
+                      >
+                        <Users className="h-4 w-4 mr-3" />
+                        Manage Subjects
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button className="w-full justify-start h-12 bg-primary text-primary-foreground hover:bg-primary/90">
+                        <FileText className="h-4 w-4 mr-3" />
+                        View Active Guidelines
+                      </Button>
+                      <Button className="w-full justify-start h-11" variant="outline">
+                        <Clock className="h-4 w-4 mr-3" />
+                        Upcoming Deadlines
+                      </Button>
+                      <Button className="w-full justify-start h-11" variant="outline">
+                        <BookOpen className="h-4 w-4 mr-3" />
+                        My Subjects
+                      </Button>
+                      <Button className="w-full justify-start h-11" variant="outline">
+                        <Settings className="h-4 w-4 mr-3" />
+                        Submission History
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
-
       </div>
     </div>
   );

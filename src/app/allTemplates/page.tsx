@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
+import { SearchBar } from '../components/searchbar';
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -25,7 +26,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
-  const [search, setSearch] = useState("");
+
 
   const handleRowClick = (template_id: number) => {
     router.push(`/?template_id=${template_id}`);
@@ -65,27 +66,7 @@ export default function Dashboard() {
             
             {/* Search Bar 
               TODO: Make sure this actually filters the table */}
-            <div className="flex justify-start">
-              <div>
-                <form>
-                    <input
-                        id="search"
-                        type="text"
-                        value={search}
-                        onChange={(t) => setSearch(t.target.value)}
-                        className="pl-1 pr-1 py-3 min-w-250 bg-gray-200 border-gray-600 rounded-xl text-gray-900 indent-2 hover:bg-gray-300"
-                        placeholder="Search for a Template..."
-                        required
-                    />
-                    <button
-                        type="submit"
-                        className="translate-x-2 min-h-10 min-w-20 py-3 rounded-xl bg-blue-700 text-white font-semibold hover:bg-blue-800 disabled:opacity-50 shadow-lg transition"
-                    > 
-                        Submit
-                    </button>
-                </form>
-              </div>
-            </div>
+            < SearchBar />
 
             {loading && (
               <div className="mt-4 p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-900">

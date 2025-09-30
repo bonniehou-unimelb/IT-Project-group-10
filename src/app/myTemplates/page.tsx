@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
+import { SearchBar } from '../components/searchbar';
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -61,7 +62,10 @@ export default function Dashboard() {
           < TopBar />
           {/* Content */}
           <main className={`${layout} py-5`}>
-            <div className="flex justify-end">
+            <h2 className="font-bold text-3xl">
+              My Templates
+            </h2>
+            <div className="pt-6 flex justify-start">
               <button
                 type="button"
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
@@ -71,6 +75,17 @@ export default function Dashboard() {
               </button>
             </div>
 
+            <p className="pt-7 text-xl"> 
+              Or edit an existing template:
+            </p>
+            
+            {/* Search Bar 
+              TODO: Make sure this actually filters the table */}
+            <div
+              className="pt-3">
+              < SearchBar />
+            </div>
+            
             {loading && (
               <div className="mt-4 p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-900">
                 Loading…

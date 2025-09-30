@@ -196,8 +196,8 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                 </Avatar>
               </div>
             </div>
-
-            {/* Two Column Layout */}
+            
+            {/*Here, we include a quick actions and community templates section*/}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               {/* Quick Actions */}
               <Card>

@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
-import "@szhsin/react-menu/dist/index.css";
-import "@szhsin/react-menu/dist/transitions/zoom.css";
+import { SideBar } from '../components/sidebar';
+import { TopBar } from '../components/topbar';
+import { SearchBar } from '../components/searchbar';
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -27,6 +26,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
+
 
   const handleRowClick = (template_id: number) => {
     router.push(`/?template_id=${template_id}`);
@@ -56,53 +56,17 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen">
         {/* Sidebar */}
-        <aside className="hidden md:flex md:w-64 md:flex-col bg-blue-900 text-white">
-          <div className="w-40 h-40 mx-auto flex items-center justify-center translate-y-2">
-            <span className="text-2xl text-white">
-              <Image src="icons/logo.svg" alt="University of Melbourne" width={200} height={200}/>
-            </span>
-          </div>
-          <nav className="mt-5 flex-1">
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Home</button>
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">My Templates</button>
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">All Templates</button>
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Profile</button>
-          </nav>
-        </aside>
-
+        <SideBar />
         {/* Main column */}
         <div className="flex-1 flex flex-col">
           {/* Top bar */}
-          <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-200">
-            <div className={`${layout} py-3 flex items-center justify-between`}>
-                <div className="leading-tight">
-                <p className="text-xs sm:text-sm text-gray-500">Dashboard</p>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Welcome back!</h1>
-                </div>
-              <Menu
-                menuButton={<MenuButton className="px-3 py-2 rounded-md border">{username} ▿</MenuButton>}
-                transition
-              >
-                {/* TODO: Fix so it erases previous user information */}
-                <MenuItem
-                  onClick = {() => router.push('/login')}>
-                  Log Out
-                </MenuItem>
-              </Menu>
-            </div>
-          </header>
-
+          < TopBar />
           {/* Content */}
           <main className={`${layout} py-5`}>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
-                onClick={() => router.push("/templates/new")}
-              >
-                + Create New AI Use Scale
-              </button>
-            </div>
+            
+            {/* Search Bar 
+              TODO: Make sure this actually filters the table */}
+            < SearchBar />
 
             {loading && (
               <div className="mt-4 p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-900">

@@ -21,6 +21,24 @@ export type TemplateSummary = {
   isTemplate: boolean;
 };
 
+// CSRF Cookie management
+function getCookie(name: string) {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(^|; )${name}=([^;]*)`));
+  return m ? decodeURIComponent(m[2]) : null;
+}
+async function ensureCsrf(): Promise<string | null> {
+  let token = getCookie("csrftoken");
+  if (!token) {
+    const res = await fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" });
+    try {
+      const body = await res.json();
+      token = body?.csrfToken || getCookie("csrftoken");
+    } catch {;}
+  }
+  return token;
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const { user, pageLoading, refresh } = useAuth();
@@ -28,6 +46,7 @@ export default function Dashboard() {
   const [username, setUsername] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  const [isCreating, setIsCreating] = useState(false);
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
 
   // Reroute to log in page if user session invalid
@@ -49,7 +68,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" })
-      .catch(() => {/* ignore */});
+      .catch(() => {;});
   }, [user]);
 
   // Fetch summary details of the templates the current user owns
@@ -74,6 +93,55 @@ export default function Dashboard() {
   }, [username]);
 
   const displayName = user?.username ?? "Account";
+
+  // Handles creating new AI use scale from scratch
+  const createNewScale = async () => {
+    setIsCreating(true);
+    setError("");
+
+    try {
+      const csrftoken = await ensureCsrf();
+      const now = new Date();
+      const payload = {
+        username: user?.username ?? "",
+        name: "New AI Use Scale",
+        subjectCode: "DRAFT",
+        year: 2025,
+        semester: 1,
+        scope: "",
+        description: "",
+        version: 0,          
+        isPublishable: false,  // start as non-publishable 
+        isTemplate: false,  // start as non-template
+      };
+
+      const res = await fetch(`${API_BACKEND_URL}/template/update/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrftoken ? { "X-CSRFToken": csrftoken, "X-Requested-With": "XMLHttpRequest" } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      // Fetch template ID only from backend 
+      const text = await res.text();
+      let body: any = {};
+      try { body = JSON.parse(text); } catch {}
+
+      if (!res.ok || !body?.templateId) {
+        throw new Error(body?.error || text || "Failed to create template");
+      }
+
+      //Route to default template creation with specified template ID
+      router.push(`/?template_id=${body.templateId}`);
+    } catch (e:any) {
+      setError(String(e?.message ?? e) || "Failed to create template");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -105,7 +173,6 @@ export default function Dashboard() {
                 menuButton={<MenuButton className="px-3 py-2 rounded-md border">{displayName} ▿</MenuButton>}
                 transition
               >
-                {/* TODO: Fix so it erases previous user information */}
                 <MenuItem
                   onClick = {() => router.push('/login')}>
                   Log Out
@@ -120,7 +187,8 @@ export default function Dashboard() {
               <button
                 type="button"
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
-                onClick={() => router.push("/templates/new")}
+                onClick={createNewScale}           
+                disabled={!user || isCreating}
               >
                 + Create New AI Use Scale
               </button>

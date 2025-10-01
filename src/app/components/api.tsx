@@ -46,7 +46,7 @@ export type TemplateDetails = {
     instructionsToStudents: string;
     examples: string;
     aiGeneratedContent: string;
-    useAcknowledgement: string;
+    useAcknowledgement: boolean;
     aiUseScaleLevel__name: string | null;
   }>;
 };
@@ -137,12 +137,13 @@ export function createOrUpdateTemplateAction(
 }
 
 export type NewItem = {
+  templateItemId?: number;   
   task: string;
   aiUseScaleLevel_name?: string;
   instructionsToStudents?: string;
   examples?: string;
   aiGeneratedContent?: string;
-  useAcknowledgement?: string;
+  useAcknowledgement?: boolean;
 };
 
 

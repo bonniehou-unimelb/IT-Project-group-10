@@ -12,7 +12,7 @@ from django.db import IntegrityError
 import traceback
 from django.db.models import Max
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)    
 
 # ---- HELPER FUNCTIONS ---- #
 def resolve_ai_use_level(use_scale_name):
@@ -154,10 +154,10 @@ def register(request):
             return JsonResponse({"success": False, "error": "username already exists"},
                                 status=HTTPStatus.CONFLICT)
 
-        role = data.get("role", User.Role.STUDENT)
+        role = data.get("role", User.Role.COORDINATOR)
         # Coerce role into a valid enum value
         if role not in User.Role.values:
-            role = User.Role.STUDENT
+            role = User.Role.COORDINATOR
 
         user = User.objects.create_user(
             username=username,

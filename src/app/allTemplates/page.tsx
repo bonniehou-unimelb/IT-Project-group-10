@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
 import { SearchBar } from '../components/searchbar';
+import { CreateTemplateButton } from "../components/createTemplateButton";
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -63,10 +64,17 @@ export default function Dashboard() {
           < TopBar />
           {/* Content */}
           <main className={`${layout} py-5`}>
+
+            {/* Page Heading */}
+            <h2 className="font-bold text-3xl">
+              All Templates
+            </h2>
             
             {/* Search Bar 
               TODO: Make sure this actually filters the table */}
-            < SearchBar />
+            <div className="pt-3">
+              < SearchBar />
+            </div>
 
             {loading && (
               <div className="mt-4 p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-900">
@@ -129,6 +137,12 @@ export default function Dashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            <p className="pl-1 pt-6 text-xl"> Or create your own!</p>
+
+            <div className="pt-2">
+              < CreateTemplateButton />
             </div>
           </main>
         </div>

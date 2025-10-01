@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
 import { SearchBar } from '../components/searchbar';
+import { CreateTemplateButton } from "../components/createTemplateButton";
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -65,14 +66,9 @@ export default function Dashboard() {
             <h2 className="font-bold text-3xl">
               My Templates
             </h2>
-            <div className="pt-6 flex justify-start">
-              <button
-                type="button"
-                className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
-                onClick={() => router.push("/templates/new")}
-              >
-                + Create New AI Use Scale
-              </button>
+
+            <div className="pt-6">
+              <CreateTemplateButton />
             </div>
 
             <p className="pt-7 text-xl"> 

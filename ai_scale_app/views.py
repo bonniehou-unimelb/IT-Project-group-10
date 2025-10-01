@@ -10,6 +10,7 @@ import json
 import logging
 from django.db import IntegrityError
 import traceback
+from django.db.models import Max
 
 logger = logging.getLogger(__name__)
 
@@ -221,6 +222,16 @@ def create_or_update_template(request):
         defaults={"name": ""}
     )
 
+    # Get the latest version number
+    latest = (
+            Template.objects
+            .filter(ownerId=user, subject=subject, name=name)
+            .aggregate(Max("version"))
+            .get("version__max")
+            or 0
+        )
+    next_version = latest + 1
+
     # Create a new teplate object with new version number
     try:
         t = Template.objects.create(
@@ -229,7 +240,7 @@ def create_or_update_template(request):
                 subject=subject,
                 scope=scope,
                 description=description,
-                version=old_version_num+1,
+                version=next_version,
                 isPublishable=is_publishable,
                 isTemplate=is_template,
             )
@@ -255,7 +266,7 @@ def update_template_item(request):
     instructions = data.get("instructionsToStudents") or ""
     examples = data.get("examples") or ""
     ai_content = data.get("aiGeneratedContent") or ""
-    ack = data.get("useAcknowledgement") or ""
+    ack = data.get("useAcknowledgement")
 
     try:
         tpl = Template.objects.get(pk=int(template_id))

@@ -12,6 +12,7 @@ import { ScrollArea } from '../components/scroll-area';
 import { Input } from '../components/input';
 import { Label } from '../components/label';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { 
   FileText, Plus, BookOpen, Users, Clock, TrendingUp, ArrowRight, Settings, Bell
@@ -61,6 +62,8 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
     students: 0,
     templates: 0
   });
+
+  const router = useRouter();
 
   /* Mock subjects data */
   const [subjectsData, setSubjectsData] = useState({
@@ -212,7 +215,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                     <>
                       <Button 
                         className="w-full justify-start h-12 bg-primary text-primary-foreground hover:bg-primary/90" 
-                        onClick={() => onNavigate('create-template')}
+                        onClick={() => router.push('/templatebuilder')}
                       >
                         <Plus className="h-4 w-4 mr-3" />
                         Create New AI Guidelines
@@ -220,7 +223,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                       <Button 
                         className="w-full justify-start h-11" 
                         variant="outline"
-                        onClick={() => onNavigate('my-templates')}
+                        onClick={() => router.push('/myTemplates')}
                       >
                         <FileText className="h-4 w-4 mr-3" />
                         View My Templates
@@ -228,7 +231,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                       <Button 
                         className="w-full justify-start h-11" 
                         variant="outline"
-                        onClick={() => onNavigate('all-templates')}
+                        onClick={() => router.push('/allTemplates')}
                       >
                         <BookOpen className="h-4 w-4 mr-3" />
                         Browse All Templates
@@ -263,10 +266,80 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                   )}
                 </CardContent>
               </Card>
+
+
+              {/* Community Templates */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      Community Templates
+                    </CardTitle>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => onNavigate('all-templates')}
+                    >
+                      View All
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+
+                  {/* Mock community templates*/}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium">Research Paper Template</h4>
+                        <p className="text-xs text-muted-foreground">Dr. Johnson</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">Science</Badge>
+                          <span className="text-xs text-muted-foreground">100 downloads</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium">STEM Lab Template</h4>
+                        <p className="text-xs text-muted-foreground">Mr. Smith</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">Science</Badge>
+                          <span className="text-xs text-muted-foreground">100 downloads</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium">Creative Writing Template</h4>
+                        <p className="text-xs text-muted-foreground">Dr. Han</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">Arts</Badge>
+                          <span className="text-xs text-muted-foreground">100 downloads</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium">Programming Assignment Template</h4>
+                        <p className="text-xs text-muted-foreground">Prof. Wang</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">IT</Badge>
+                          <span className="text-xs text-muted-foreground">100 downloads</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
   );
 }

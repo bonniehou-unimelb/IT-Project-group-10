@@ -118,6 +118,60 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* First & Last Name Fields */}
+            <div className="flex gap-4">
+              {/* First Name */}
+              <div className="flex-1 space-y-2">
+                <label htmlFor="firstName" className="text-sm font-medium text-gray-700"> 
+                  First Name
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-300 border-gray-600 rounded-xl text-gray-900 placeholder-gray-500 hover:bg-gray-100"
+                  placeholder="Enter first name"
+                  required
+                />
+              </div>
+
+              {/* Last Name */}
+              <div className="flex-1 space-y-2">
+                <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                  Last Name
+                </label>
+                <input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-300 border-gray-600 rounded-xl text-gray-900 placeholder-gray-500 hover:bg-gray-100"
+                  placeholder="Enter last name"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Role Dropdown */}
+              <div className="space-y-2">
+                <label htmlFor="role" className="text-sm font-medium text-gray-700">
+                  Role
+                </label>
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full pl-3 pr-10 py-3 bg-gray-300 border-gray-600 rounded-xl text-gray-900 hover:bg-gray-100"
+                  required
+                >
+                  <option value="STUDENT">Student</option>
+                  <option value="STAFF">Staff</option>
+                  <option value="COORDINATOR">Coordinator</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+            
             {/* Email Field */}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-gray-700">

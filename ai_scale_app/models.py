@@ -97,7 +97,7 @@ class TemplateItem(models.Model):
     instructionsToStudents = models.TextField(blank=True, null=True)
     examples = models.TextField(blank=True, null=True)
     aiGeneratedContent = models.TextField(blank=True, null=True)
-    useAcknowledgement = models.TextField(default=False)
+    useAcknowledgement = models.BooleanField(default=False)
 
     class Meta:
         indexes = [models.Index(fields=["templateId"])]

@@ -13,6 +13,9 @@ urlpatterns = [
     path("template/summary/", views.summary_templates, name="summarise_templates"),
     path("template/details/", views.template_details, name="template_details"),
     path("template/delete/", views.delete_template, name = "delete_template"),
-
+    path("template/duplicate/", views.duplicate_template, name="duplicate_template"),
+    path("session/", views.curr_user_session, name="user_session"),
+    path("logout/", views.user_logout, name="logout"),
+    path("token/", views.csrf_token, name="csrf_token")
 
 ]

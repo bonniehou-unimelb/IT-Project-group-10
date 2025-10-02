@@ -1,4 +1,5 @@
 import AIGuidelinesBuilder from './components/AIGuidelinesBuilder';
+import {Suspense} from 'react';
 import Image from 'next/image';
 
 export default function App() {
@@ -11,7 +12,9 @@ export default function App() {
       </div>
       </div>
       <div className="flex-1">
-        <AIGuidelinesBuilder />
+        <Suspense>
+          <AIGuidelinesBuilder />
+        </Suspense>
       </div>
     </div>
   );

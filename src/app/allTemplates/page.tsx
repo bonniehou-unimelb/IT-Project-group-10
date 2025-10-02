@@ -5,6 +5,7 @@ import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
 import { SearchBar } from '../components/searchbar';
 import { CreateTemplateButton } from "../components/createTemplateButton";
+import { useAuth } from "../authentication/auth";
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -20,27 +21,66 @@ export type TemplateSummary = {
   isTemplate: boolean;
 };
 
+// CSRF Cookie management
+function getCookie(name: string) {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(^|; )${name}=([^;]*)`));
+  return m ? decodeURIComponent(m[2]) : null;
+}
+async function ensureCsrf(): Promise<string | null> {
+  let token = getCookie("csrftoken");
+  if (!token) {
+    const res = await fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" });
+    try {
+      const body = await res.json();
+      token = body?.csrfToken || getCookie("csrftoken");
+    } catch {;}
+  }
+  return token;
+}
+
 export default function Dashboard() {
   const router = useRouter();
+  const { user, pageLoading, refresh } = useAuth();
   const [templateSum, setTemplateSum] = useState<TemplateSummary[]>([]);
-  const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
+  const [username, setUsername] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  const [isCreating, setIsCreating] = useState(false);
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
+
+  // Reroute to log in page if user session invalid
+  useEffect(() => {
+    if (!pageLoading && !user) router.replace("/login");
+  }, [pageLoading, user, router]);
+
+  useEffect(() => { refresh(); }, []); 
+
+  useEffect(() => {
+    if (user?.username) setUsername(user.username);
+  }, [user]);
 
 
   const handleRowClick = (template_id: number) => {
     router.push(`/?template_id=${template_id}`);
   };
 
+  // Fetch cookie for user session
   useEffect(() => {
-    if (!username) return;
+    if (!user) return;
+    fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" })
+      .catch(() => {;});
+  }, [user]);
+
+  // Fetch summary details of the templates the current user owns
+  useEffect(() => {
+    if (!username || !user) return; 
     (async () => {
       try {
         setLoading(true);
         setError("");
         const res = await fetch(
-          `${API_BACKEND_URL}/template/summary/?username=${encodeURIComponent(username)}`,
+          `${API_BACKEND_URL}/template/summary/?username=${encodeURIComponent(user.username)}`,
           { method: "GET", credentials: "include" }
         );
         const data = (await res.json()) as { templates: TemplateSummary[] };
@@ -53,6 +93,57 @@ export default function Dashboard() {
     })();
   }, [username]);
 
+  const displayName = user?.username ?? "Account";
+
+  // Handles creating new AI use scale from scratch
+  const createNewScale = async () => {
+    setIsCreating(true);
+    setError("");
+
+    try {
+      const csrftoken = await ensureCsrf();
+      const now = new Date();
+      const payload = {
+        username: user?.username ?? "",
+        name: "New AI Use Scale",
+        subjectCode: "DRAFT",
+        year: 2025,
+        semester: 1,
+        scope: "",
+        description: "",
+        version: 0,          
+        isPublishable: false,  // start as non-publishable 
+        isTemplate: false,  // start as non-template
+      };
+
+      const res = await fetch(`${API_BACKEND_URL}/template/update/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrftoken ? { "X-CSRFToken": csrftoken, "X-Requested-With": "XMLHttpRequest" } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      // Fetch template ID only from backend 
+      const text = await res.text();
+      let body: any = {};
+      try { body = JSON.parse(text); } catch {}
+
+      if (!res.ok || !body?.templateId) {
+        throw new Error(body?.error || text || "Failed to create template");
+      }
+
+      //Route to default template creation with specified template ID
+      router.push(`/?template_id=${body.templateId}`);
+    } catch (e:any) {
+      setError(String(e?.message ?? e) || "Failed to create template");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen">
@@ -62,6 +153,7 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col">
           {/* Top bar */}
           < TopBar />
+
           {/* Content */}
           <main className={`${layout} py-5`}>
 
@@ -125,12 +217,38 @@ export default function Dashboard() {
                       <td className="px-4 py-3">{tpl.isPublishable ? "Yes" : "No"}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
-                          <button className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50">
-                            Preview
-                          </button>
-                          <button className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50">
-                            Duplicate
-                          </button>
+                          <button
+                          className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
+                          onClick={(e) => {
+                            e.stopPropagation(); 
+                            router.push(`/?template_id=${tpl.templateId}`); 
+                          }}
+                        >
+                          Preview
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50"
+                          onClick={async (e) => {
+                            e.stopPropagation(); // prevent row click
+                            try {
+                              const res = await fetch(`${API_BACKEND_URL}/template/duplicate/`, {
+                                method: "POST",
+                                credentials: "include",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ templateId: tpl.templateId }),
+                              });
+                              if (!res.ok) throw new Error("Failed to duplicate template");
+
+                              const data = await res.json();
+                              setTemplateSum((prev) => [data.new_template, ...prev]);
+                            } catch (err) {
+                              console.error(err);
+                              alert("Failed to duplicate template");
+                            }
+                          }}
+                        >
+                          Duplicate
+                        </button>
                         </div>
                       </td>
                     </tr>

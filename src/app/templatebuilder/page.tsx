@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../components/alert-dialog';
+import { Suspense } from 'react';
 
 export default function App() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -61,7 +62,9 @@ export default function App() {
         </div>
       </div>
       <div className="flex-1">
-        <AIGuidelinesBuilder />
+        <Suspense>
+          <AIGuidelinesBuilder />
+        </Suspense>
       </div>
 
       {/* Save confirmation dialog */}

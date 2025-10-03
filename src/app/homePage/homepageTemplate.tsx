@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ScrollArea } from '../components/scroll-area';
 import { Input } from '../components/input';
 import { Label } from '../components/label';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { SideBar } from '../components/sidebar';
 
 import { 
   FileText, Plus, BookOpen, Users, Clock, TrendingUp, ArrowRight, Settings, Bell
@@ -61,6 +62,8 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
     students: 0,
     templates: 0
   });
+
+  const router = useRouter();
 
   /* Mock subjects data */
   const [subjectsData, setSubjectsData] = useState({
@@ -154,17 +157,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
     <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen">
         {/* Sidebar */}
-        <aside className="hidden md:flex md:w-64 md:flex-col bg-blue-900 text-white">
-          <div className="w-40 h-40 mx-auto flex items-center justify-center translate-y-2">
-            <Image src="icons/logo.svg" alt="University of Melbourne" width={200} height={200}/>
-          </div>
-          <nav className="mt-5 flex-1">
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Home</button>
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">My Templates</button>
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">All Templates</button>
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Profile</button>
-          </nav>
-        </aside>
+        <SideBar />
 
         {/* Main Content */}
         <div className="flex-1">
@@ -211,8 +204,8 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                   {userRole === 'subjectCoord' ? (
                     <>
                       <Button 
-                        className="w-full justify-start h-12 bg-primary text-primary-foreground hover:bg-primary/90" 
-                        onClick={() => onNavigate('create-template')}
+                        className="w-full justify-start h-12 bg-blue-600 text-primary-foreground hover:bg-blue-700" 
+                        onClick={() => router.push('/templates/new')}
                       >
                         <Plus className="h-4 w-4 mr-3" />
                         Create New AI Guidelines
@@ -220,7 +213,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                       <Button 
                         className="w-full justify-start h-11" 
                         variant="outline"
-                        onClick={() => onNavigate('my-templates')}
+                        onClick={() => router.push('/myTemplates')}
                       >
                         <FileText className="h-4 w-4 mr-3" />
                         View My Templates
@@ -228,7 +221,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                       <Button 
                         className="w-full justify-start h-11" 
                         variant="outline"
-                        onClick={() => onNavigate('all-templates')}
+                        onClick={() => router.push('/allTemplates')}
                       >
                         <BookOpen className="h-4 w-4 mr-3" />
                         Browse All Templates
@@ -263,10 +256,80 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                   )}
                 </CardContent>
               </Card>
+
+
+              {/* Community Templates */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      Community Templates
+                    </CardTitle>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => router.push("/allTemplates")}
+                    >
+                      View All
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+
+                  {/* Mock community templates*/}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium">Research Paper Template</h4>
+                        <p className="text-xs text-muted-foreground">Dr. Johnson</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">Science</Badge>
+                          <span className="text-xs text-muted-foreground">100 downloads</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium">STEM Lab Template</h4>
+                        <p className="text-xs text-muted-foreground">Mr. Smith</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">Science</Badge>
+                          <span className="text-xs text-muted-foreground">100 downloads</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium">Creative Writing Template</h4>
+                        <p className="text-xs text-muted-foreground">Dr. Han</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">Arts</Badge>
+                          <span className="text-xs text-muted-foreground">100 downloads</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium">Programming Assignment Template</h4>
+                        <p className="text-xs text-muted-foreground">Prof. Wang</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">IT</Badge>
+                          <span className="text-xs text-muted-foreground">100 downloads</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
   );
 }

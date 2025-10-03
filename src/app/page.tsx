@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import AIGuidelinesBuilder from './components/AIGuidelinesBuilder';
 import { Button } from './components/button';
 import { ArrowLeft } from 'lucide-react';
+import {Suspense} from 'react';
 import Image from 'next/image';
 import {
   AlertDialog,
@@ -63,7 +64,9 @@ export default function App() {
         </div>
       </div>
       <div className="flex-1">
-        <AIGuidelinesBuilder />
+        <Suspense>
+          <AIGuidelinesBuilder />
+        </Suspense>
       </div>
 
       {/* Save confirmation dialog */}

@@ -4,12 +4,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login as auth_login
 from .models import User, Subject, Template, TemplateItem, TemplateOwnership, Enrolment, AIUseScale
 from http import HTTPStatus
+from django.contrib.auth import logout as auth_logout
+from django.middleware.csrf import get_token
 import json
 import logging
 from django.db import IntegrityError
 import traceback
+from django.db.models import Max
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)    
 
 # ---- HELPER FUNCTIONS ---- #
 def resolve_ai_use_level(use_scale_name):
@@ -64,6 +67,20 @@ def user_details(request):
         "role": user.role,
     }, status=HTTPStatus.OK)
 
+# GET /session/
+@require_GET
+def curr_user_session(request):
+    """
+    Return the user session if user is authenticated already
+    """
+    if request.user.is_authenticated:
+        curr_user = request.user
+        return JsonResponse({"isAuthenticated": True, "user": {
+            "username": curr_user.username, "role": getattr(curr_user, "role", None)
+        }}, status=HTTPStatus.OK)
+    return JsonResponse({"isAauthenticated": False}, status=HTTPStatus.UNAUTHORIZED)
+
+
 # GET /info/taught_subjects/?username=...
 @require_GET
 def enrolment_teaching(request):
@@ -89,7 +106,7 @@ def enrolment_teaching(request):
     return JsonResponse({"taught_subjects": []}, status=HTTPStatus.OK)
 
 # POST /auth/login/   body: JSON or form {username, password}
-@csrf_exempt  # remove when your frontend sends CSRF tokens
+@csrf_exempt
 @require_POST
 def user_login(request):
     """
@@ -119,7 +136,6 @@ def user_login(request):
                             status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 # POST /auth/register/  body: JSON or form {username, password, first_name, last_name, role}
-@csrf_exempt
 @require_POST
 def register(request):
     """
@@ -138,10 +154,10 @@ def register(request):
             return JsonResponse({"success": False, "error": "username already exists"},
                                 status=HTTPStatus.CONFLICT)
 
-        role = data.get("role", User.Role.STUDENT)
+        role = data.get("role", User.Role.COORDINATOR)
         # Coerce role into a valid enum value
         if role not in User.Role.values:
-            role = User.Role.STUDENT
+            role = User.Role.COORDINATOR
 
         user = User.objects.create_user(
             username=username,
@@ -157,10 +173,28 @@ def register(request):
         return JsonResponse({"success": False, "error": "Server error occurred"},
                             status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
+# GET /token/
+@require_GET
+def csrf_token(request):
+    """
+    Set the user session token
+    """
+    return JsonResponse({"csrfToken": get_token(request)}, status = HTTPStatus.OK)
+
+
+# POST /logout/
+@require_POST
+def user_logout(request):
+    """
+    Exits the user session
+    """
+    auth_logout(request)
+    return JsonResponse({"success": True}, status=HTTPStatus.OK)
+
+
 # POST /template/update/
 # body {username, name, scope, description, subject code, year, semester, version, isPublishable, isTemplate}
 # given version should be the current version number
-@csrf_exempt
 @require_POST
 def create_or_update_template(request):
     """
@@ -188,6 +222,16 @@ def create_or_update_template(request):
         defaults={"name": ""}
     )
 
+    # Get the latest version number
+    latest = (
+            Template.objects
+            .filter(ownerId=user, subject=subject, name=name)
+            .aggregate(Max("version"))
+            .get("version__max")
+            or 0
+        )
+    next_version = latest + 1
+
     # Create a new teplate object with new version number
     try:
         t = Template.objects.create(
@@ -196,7 +240,7 @@ def create_or_update_template(request):
                 subject=subject,
                 scope=scope,
                 description=description,
-                version=old_version_num+1,
+                version=next_version,
                 isPublishable=is_publishable,
                 isTemplate=is_template,
             )
@@ -210,7 +254,6 @@ def create_or_update_template(request):
 
 # POST /templateitem/update
 # body {templateId, task, aiUseScaleLevel, instructionsToStudents, examples,aiGeneratedContent, useAcknowledgement}
-@csrf_exempt
 @require_POST
 def update_template_item(request):
     data = _body(request)
@@ -223,7 +266,7 @@ def update_template_item(request):
     instructions = data.get("instructionsToStudents") or ""
     examples = data.get("examples") or ""
     ai_content = data.get("aiGeneratedContent") or ""
-    ack = data.get("useAcknowledgement") or ""
+    ack = data.get("useAcknowledgement")
 
     try:
         tpl = Template.objects.get(pk=int(template_id))
@@ -350,7 +393,6 @@ def template_details(request):
 
 # POST /template/delete/    body={"templateId": ...}
 # DELETE a template by its id, also delete its template items
-@csrf_exempt
 @require_POST
 def delete_template(request):
     data = _body(request)
@@ -363,5 +405,93 @@ def delete_template(request):
     t.delete()
     return JsonResponse({"success": True}, status=HTTPStatus.OK)
 
+@csrf_exempt
+@require_POST
+def duplicate_template(request):
+    # Creates a copy of an existing template for the same owner, appending (1), (2), etc to the name
+    data = _body(request)
+    template_id = data.get("templateId")
 
-# 
+    if not template_id:
+        return JsonResponse({"error": "templateId is required"}, status=HTTPStatus.BAD_REQUEST)
+
+    try:
+        from .models import Template, TemplateItem, AcknowledgementForm, AcknowledgementFormItem, TemplateOwnership
+        import re
+
+        original = Template.objects.get(pk=int(template_id))
+
+        # strip (n) if already in name
+        base_name = re.sub(r" \(\d+\)$", "", original.name)
+
+        # find existing duplicates for this owner
+        existing_names = Template.objects.filter(ownerId=original.ownerId, name__startswith=base_name).values_list("name", flat=True)
+        max_num = 0
+        for name in existing_names:
+            match = re.search(r"\((\d+)\)$", name)
+            if match:
+                max_num = max(max_num, int(match.group(1)))
+
+        new_name = f"{base_name} ({max_num+1})"
+
+        # create new Template
+        new_template = Template.objects.create(
+            ownerId=original.ownerId,
+            name=new_name,
+            scope=original.scope,
+            description=original.description,
+            subject=original.subject,
+            version=original.version,
+            isPublishable=original.isPublishable,
+            isTemplate=original.isTemplate,
+        )
+        TemplateOwnership.objects.create(templateId=new_template, ownerId=original.ownerId)
+
+        # duplicate TemplateItems
+        for item in TemplateItem.objects.filter(templateId=original):
+            TemplateItem.objects.create(
+                templateId=new_template,
+                task=item.task,
+                aiUseScaleLevel=item.aiUseScaleLevel,
+                instructionsToStudents=item.instructionsToStudents,
+                examples=item.examples,
+                aiGeneratedContent=item.aiGeneratedContent,
+                useAcknowledgement=item.useAcknowledgement,
+            )
+
+        # duplicate AcknowledgementForms and Items
+        for form in AcknowledgementForm.objects.filter(templateId=original):
+            new_form = AcknowledgementForm.objects.create(
+                templateId=new_template,
+                name=form.name,
+                subject=form.subject,
+            )
+            for form_item in AcknowledgementFormItem.objects.filter(ackFormId=form):
+                AcknowledgementFormItem.objects.create(
+                    ackFormId=new_form,
+                    aiToolsUsed=form_item.aiToolsUsed,
+                    purposeUsage=form_item.purposeUsage,
+                    keyPromptsUsed=form_item.keyPromptsUsed,
+                )
+
+        return JsonResponse({
+            "success": True,
+            "new_template": {
+                "templateId": new_template.id,
+                "name": new_template.name,
+                "version": new_template.version,
+                "subjectCode": new_template.subject.subjectCode if new_template.subject else "",
+                "year": new_template.subject.year if new_template.subject else None,
+                "semester": new_template.subject.semester if new_template.subject else None,
+                "ownerName": f"{new_template.ownerId.first_name} {new_template.ownerId.last_name}".strip(),
+                "isPublishable": bool(new_template.isPublishable),
+                "isTemplate": bool(new_template.isTemplate),
+            }
+        }, status=HTTPStatus.CREATED)
+
+
+    except Template.DoesNotExist:
+        return JsonResponse({"error": "Template is non-existent"}, status=HTTPStatus.NOT_FOUND)
+    except Exception as e:
+        logger.exception("Unable to duplicate template")
+        return JsonResponse({"error": str(e)}, status=HTTPStatus.BAD_REQUEST)

@@ -13,13 +13,13 @@ import { useTemplateDetails, createOrUpdateTemplateAction, addTemplateItemAction
 import { useSearchParams } from "next/navigation";
 
 interface AIUseLevel {
-  id: string;
+  id: number | string;
   task?: string;
   aiUseScaleLevel_name: string;   
   instructions: string;
   examples: string;
   aiGeneratedContent: string;     
-  acknowledgement: string;
+  acknowledgement: boolean;
 }
 
 interface TemplateScale {
@@ -65,7 +65,7 @@ export default function AIGuidelinesBuilder() {
       instructions: 'The assessment is completed entirely without AI assistance. This level ensures that students rely solely on their knowledge, understanding, and skills. AI must not be used at any point during the assessment',
       examples: 'Traditional exams, in-class essays, mathematical problem-solving without computational aids, original creative writing',
       aiGeneratedContent: 'Add details here…',
-      acknowledgement: 'Students must acknowledge that they have not used AI tools in completing this assessment.',
+      acknowledgement: true,
     },
     {
       id: '2',
@@ -74,7 +74,7 @@ export default function AIGuidelinesBuilder() {
       instructions: 'You may use AI tools for initial research, topic exploration, and brainstorming ideas. However, all analysis, writing, and final work must be your own.',
       examples: 'Using ChatGPT to understand complex topics, generating research questions, exploring different perspectives on a subject',
       aiGeneratedContent: 'Add details here…',
-      acknowledgement: 'Students must acknowledge that they have not used AI tools in completing this assessment.',
+      acknowledgement: true,
     },
     {
       id: '3',
@@ -83,7 +83,7 @@ export default function AIGuidelinesBuilder() {
       instructions: 'AI tools may be used to assist with writing tasks such as grammar checking, style suggestions, and structural feedback. The core ideas and arguments must be your own.',
       examples: 'Using Grammarly for editing, ChatGPT for feedback on draft structure, AI tools for citation formatting',
       aiGeneratedContent: 'Add details here…',
-      acknowledgement: 'Students must acknowledge that they have not used AI tools in completing this assessment.',
+      acknowledgement: true,
     },
     {
       id: '4',
@@ -92,7 +92,7 @@ export default function AIGuidelinesBuilder() {
       instructions: 'AI tools are encouraged as collaborative partners. You may use AI for research, drafting, analysis, and refinement while demonstrating critical evaluation of AI outputs.',
       examples: 'Co-writing with AI, using AI for data analysis, AI-assisted coding projects, collaborative problem-solving with AI',
       aiGeneratedContent: 'Add details here…',
-      acknowledgement: 'Students must acknowledge that they have not used AI tools in completing this assessment.',
+      acknowledgement: true,
     },
   ]);
 
@@ -109,21 +109,23 @@ export default function AIGuidelinesBuilder() {
       setGuidelinesTitle(payload.name ?? 'AI Use Guidelines for Assessment');
       setAssessmentType(payload.scope ?? 'Assignment');
       setSubjectCode(payload.subject?.code ?? "COMP10001");
-      setSemester(payload.subject?.semester ?? "1");
-      setYear(payload.subject?.year ?? "2025");
+      setSemester(payload.subject?.semester ?? 1);
+      setYear(payload.subject?.year ?? 2025);
       setVersion(payload.version ?? 0);
       setIsPublishable(Boolean(payload.isPublishable));
       setIsTemplate(Boolean(payload.isTemplate));
+      setVersion(Number(payload.version ?? 0));
+      setCurrentVersion(Number(payload.version ?? 0)); 
 
 
       // Map API template_items to table rows for display
       const mapped = (payload.template_items ?? []).map((it, idx) => ({
-        id: String(it.id ?? idx),
+        id: String(it.id),
         task: it.task ?? '',
         aiUseScaleLevel_name: it.aiUseScaleLevel__name ?? `Level ${idx + 1}`,
         instructions: it.instructionsToStudents ?? '',
         examples: it.examples ?? '',
-        acknowledgement: it.useAcknowledgement ?? 'false',
+        acknowledgement: Boolean(it.useAcknowledgement),
         aiGeneratedContent: it.aiGeneratedContent ?? '',
       }));
 
@@ -143,26 +145,26 @@ export default function AIGuidelinesBuilder() {
         instructions: '',
         examples: '',
         aiGeneratedContent: '',
-        acknowledgement: '',
+        acknowledgement: true,
       },
     ]);
   };
 
 
-  const removeAIUseLevel = (id: string) => {
+  const removeAIUseLevel = (id: string | number) => {
     if (aiUseLevels.length <= 1) return; // Keep at least 1 level
     setAIUseLevels(aiUseLevels.filter(level => level.id !== id));
   };
 
   //update description for AI use level
-  const updateAIUseLevel = (id: string, field: keyof AIUseLevel, value: string) => {
+  const updateAIUseLevel = (id: string | number, field: keyof AIUseLevel, value: string | boolean) => {
     setAIUseLevels(aiUseLevels.map(level => 
       level.id === id ? { ...level, [field]: value } : level
     ));
   };
 
-  const handleSelectTemplate = (template: TemplateScale) => {
-    const newLevels = template.levels.map((level, index) => ({
+  const handleSelectTemplate = (template: any) => {
+    const newLevels = (template.levels ?? []).map((level: any, index: number) => ({
       ...level,
       id: (Date.now() + index).toString()
     }));
@@ -197,38 +199,19 @@ export default function AIGuidelinesBuilder() {
 
             // Add all template items (updated or not) to the template just created
             // Call addTemplateItemAction to add the item for every row in the guidelines form
-            const addItemOnce = (item: {
-              task?: string;
-              aiUseScaleLevel?: string;
-              instructionsToStudents?: string;
-              examples?: string;
-              aiGeneratedContent?: string;
-              useAcknowledgement?: boolean;
-              }) =>
-                new Promise<void>((resolve, reject) => {
-                  const addItem = addTemplateItemAction(
-                    templateId,
-                    () => resolve(),
-                    (msg) => reject(new Error(msg))
-                  );
-                  addItem(item);
-                  console.log("added an item to template");
-                });
+            const addItemOnce = (level: AIUseLevel) => {
+              const addItem = addTemplateItemAction(templateId!);
+              return addItem({
+                task: level.task ?? 'NA',
+                aiUseScaleLevel_name: level.aiUseScaleLevel_name ?? 'NA',
+                instructionsToStudents: level.instructions ?? 'NA',
+                examples: level.examples ?? 'NA',
+                aiGeneratedContent: level.aiGeneratedContent ?? 'NA',
+                useAcknowledgement: !!level.acknowledgement,
+              });
+            };
+            await Promise.all(aiUseLevels.map(addItemOnce));
 
-            //Loop through all rows and add the template items to the parent template
-            const addAll = aiUseLevels.map((level) =>
-              addItemOnce({
-                task: level.task ?? "NA",
-                aiUseScaleLevel: level.aiUseScaleLevel_name ?? "NA",    
-                instructionsToStudents: level.instructions ?? "NA",
-                examples: level.examples ?? "NA",
-                aiGeneratedContent: level.aiGeneratedContent ?? "NA",    
-                useAcknowledgement: Boolean(level.acknowledgement),
-              })
-            );
-
-
-            await Promise.all(addAll);
             setIsFetched(false);
             open(templateId)
             console.log("Template items created.")
@@ -482,14 +465,17 @@ export default function AIGuidelinesBuilder() {
                       />
 
                     </td>
-                    {/* Acknowledgement */}
+                    {/* Acknowledgement, check box for need to acknowledge or not */}
                     <td className="p-4 align-top">
-                      <Textarea
-                        value={level.acknowledgement}
-                        onChange={(e) => updateAIUseLevel(level.id, 'acknowledgement', e.target.value)}
-                        placeholder="Required acknowledgement statement for students..."
-                        className="min-h-32 resize-none text-sm bg-transparent"
-                      />
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={!!level.acknowledgement}
+                          onChange={(e) => updateAIUseLevel(level.id, 'acknowledgement', e.target.checked as any)}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-sm">Student acknowledgement required</span>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -4,12 +4,22 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 const API_BACKEND_URL = "http://localhost:8000";
 
+// setup user session cookie 
+function getCookie(name: string) {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(^|; )${name}=([^;]*)`));
+  return m ? decodeURIComponent(m[2]) : null;
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [role, setRole] = useState("STUDENT");
+  const [firstName, setFirstName] = useState("John");
+  const [lastName, setLastName] = useState("Doe");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -17,6 +27,19 @@ export default function LoginPage() {
   // Check if passwords match
   const passwordsMatch = password === confirmPassword;
   const showPasswordMismatch = confirmPassword.length > 0 && !passwordsMatch;
+
+  // Send POST request with a CSRF cookie
+  async function ensureCsrf(): Promise<string | null> {
+    let token = getCookie("csrftoken");
+    if (!token) {
+      const res = await fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" });
+      try {
+        const body = await res.json();
+        token = body?.csrfToken || getCookie("csrftoken");
+      } catch { ; }
+    }
+    return token;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,19 +55,24 @@ export default function LoginPage() {
     
     //Attempt API registration call to backend server with login details
     try {
+      const csrftoken = await ensureCsrf();
       const auth_result = await fetch(`${API_BACKEND_URL}/auth/register/`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json", ...(csrftoken ? { "X-CSRFToken": csrftoken, "X-Requested-With": "XMLHttpRequest" } : {}),
         },
         credentials: "include",
         body: JSON.stringify({
           username: email, 
           password: password,
+          first_name: firstName,
+          last_name: lastName,
+          role: role
         }),
       });
 
       const data = await auth_result.json().catch(() => ({}));
+      console.log(data)
 
       if (!auth_result.ok || !data.success){
         console.log("Registration attempt failed");
@@ -55,7 +83,7 @@ export default function LoginPage() {
         console.log("Registration successful");
         //Redirect registered user to their dashboard
         // TO DO: redirect according to their user role
-        router.push("/dashboard");
+        router.push("/login");
       }
     } catch (err){
       console.log("Server error");

@@ -7,7 +7,7 @@
       "username": "alicebarn@student.unimelb.edu.au",
       "first_name": "Alice",
       "last_name": "Barn",
-      "password":"12345678"
+      "password": "12345678"
     }
   },
   {
@@ -18,7 +18,7 @@
       "username": "benconnor@unimelb.edu.au",
       "first_name": "Ben",
       "last_name": "Connor",
-      "password":"12345678"
+      "password": "12345678"
     }
   },
   {
@@ -29,7 +29,7 @@
       "username": "charliedan@unimelb.edu.au",
       "first_name": "Charlie",
       "last_name": "Dan",
-      "password":"12345678"
+      "password": "12345678"
     }
   },
   {
@@ -40,7 +40,7 @@
       "username": "daniellesmith@student.unimelb.edu.au",
       "first_name": "Danielle",
       "last_name": "Smith",
-      "password":"12345678"
+      "password": "12345678"
     }
   },
   {
@@ -51,7 +51,7 @@
       "username": "emilyjones@student.unimelb.edu.au",
       "first_name": "Emily",
       "last_name": "Jones",
-      "password":"12345678"
+      "password": "12345678"
     }
   },
 
@@ -156,8 +156,8 @@
       "scope": "Undergraduate FEIT",
       "description": "Outlines acceptable forms of AI use during coding, documentation, progress reports and etc.",
       "subject": 2,
-      "isTemplate":true,
-      "isPublishable":true
+      "isTemplate": true,
+      "isPublishable": true
     }
   },
   {
@@ -169,8 +169,8 @@
       "scope": "Undergraduate FEIT",
       "description": "Outlines acceptable forms of AI use during individual and group coding tasks.",
       "subject": 1,
-      "isTemplate":true,
-      "isPublishable":true
+      "isTemplate": true,
+      "isPublishable": true
     }
   },
   {
@@ -182,8 +182,8 @@
       "scope": "Undergraduate FEIT",
       "description": "Guidelines for AI use in research reports",
       "subject": 4,
-      "isTemplate":false,
-      "isPublishable":true
+      "isTemplate": false,
+      "isPublishable": true
     }
   },
   {
@@ -195,8 +195,8 @@
       "scope": "Undergraduate FEIT",
       "description": "AI use guidelines for database projects",
       "subject": 3,
-      "isTemplate":true,
-      "isPublishable":true
+      "isTemplate": true,
+      "isPublishable": true
     }
   },
   {
@@ -208,8 +208,8 @@
       "scope": "Undergraduate FEIT",
       "description": "AI use guidelines for web development tasks",
       "subject": 5,
-      "isTemplate":true,
-      "isPublishable":true
+      "isTemplate": true,
+      "isPublishable": true
     }
   },
 
@@ -252,6 +252,27 @@
       "templateId": 4,
       "ownerId": 3
     }
+  },
+
+  {
+    "model": "ai_scale_app.aiusescale",
+    "pk": 1,
+    "fields": { "name": "No AI use allowed" }
+  },
+  {
+    "model": "ai_scale_app.aiusescale",
+    "pk": 2,
+    "fields": { "name": "Minimal AI use allowed" }
+  },
+  {
+    "model": "ai_scale_app.aiusescale",
+    "pk": 3,
+    "fields": { "name": "Moderate AI use allowed" }
+  },
+  {
+    "model": "ai_scale_app.aiusescale",
+    "pk": 4,
+    "fields": { "name": "Broad AI use allowed" }
   },
 
   {
@@ -318,36 +339,5 @@
       "aiGeneratedContent": "Must be properly cited",
       "useAcknowledgement": true
     }
-  },
-  {
-    "model": "ai_scale_app.aiusescale",
-    "pk": 1,
-    "fields": {
-      "name": "No AI."
-    }
-  },
-  {
-    "model": "ai_scale_app.aiusescale",
-    "pk": 2,
-    "fields": {
-      "name": "AI-Assisted Proofreading."
-    }
-  },
-  {
-    "model": "ai_scale_app.aiusescale",
-    "pk": 3,
-    "fields": {
-      "name": "AI-Assisted Contextual Research."
-    }
-  },
-  {
-    "model": "ai_scale_app.aiusescale",
-    "pk": 4,
-    "fields": {
-      "name": "AI for General Learning (not assessment-oriented)."
-    }
   }
-
 ]
-
-  

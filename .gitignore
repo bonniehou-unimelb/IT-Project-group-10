@@ -60,3 +60,4 @@ media/
 .idea/
 .DS_Store
 Thumbs.db
+migrations

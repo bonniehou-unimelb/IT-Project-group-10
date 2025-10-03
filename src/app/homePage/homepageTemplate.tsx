@@ -11,8 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ScrollArea } from '../components/scroll-area';
 import { Input } from '../components/input';
 import { Label } from '../components/label';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { SideBar } from '../components/sidebar';
 
 import { 
   FileText, Plus, BookOpen, Users, Clock, TrendingUp, ArrowRight, Settings, Bell
@@ -157,17 +157,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
     <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen">
         {/* Sidebar */}
-        <aside className="hidden md:flex md:w-64 md:flex-col bg-blue-900 text-white">
-          <div className="w-40 h-40 mx-auto flex items-center justify-center translate-y-2">
-            <Image src="icons/logo.svg" alt="University of Melbourne" width={200} height={200}/>
-          </div>
-          <nav className="mt-5 flex-1">
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Home</button>
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">My Templates</button>
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">All Templates</button>
-            <button className="w-full text-left px-6 py-3 hover:bg-blue-950">Profile</button>
-          </nav>
-        </aside>
+        <SideBar />
 
         {/* Main Content */}
         <div className="flex-1">
@@ -214,8 +204,8 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                   {userRole === 'subjectCoord' ? (
                     <>
                       <Button 
-                        className="w-full justify-start h-12 bg-primary text-primary-foreground hover:bg-primary/90" 
-                        onClick={() => router.push('/templatebuilder')}
+                        className="w-full justify-start h-12 bg-blue-600 text-primary-foreground hover:bg-blue-700" 
+                        onClick={() => router.push('/templates/new')}
                       >
                         <Plus className="h-4 w-4 mr-3" />
                         Create New AI Guidelines
@@ -279,7 +269,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => onNavigate('all-templates')}
+                      onClick={() => router.push("/allTemplates")}
                     >
                       View All
                       <ArrowRight className="h-4 w-4 ml-2" />

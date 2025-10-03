@@ -256,6 +256,12 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
+
+            <p className="pl-1 pt-6 text-xl"> Or create your own!</p>
+
+            <div className="pt-2">
+              < CreateTemplateButton />
+            </div>
           </main>
         </div>
       </div>

@@ -1,8 +1,13 @@
 ## Backend Setup
-1. Setup and activate virtual environment
+1. Setup and activate virtual environment (Macbook)
 ```bash
 python -m venv .venv
 source .venv/bin/activate    
+```
+for Windows, run this instead
+```
+python -m venv .venv
+source .venv/Scripts/activate
 ```
 2. Install packages 
 ```bash

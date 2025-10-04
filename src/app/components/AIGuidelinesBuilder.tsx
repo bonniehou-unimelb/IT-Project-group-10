@@ -236,6 +236,100 @@ export default function AIGuidelinesBuilder() {
     }
   }
 
+  const escapeHtml = (str: string) => 
+    String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const buildPrintableHTML = () => {
+    const tableHeader = `
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;min-width:80px">Task</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;min-width:80px">AI Assessment Use Levels</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;min-width:300px">Instructions to Students</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;min-width:200px">Examples</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;min-width:200px">AI Generated Content</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;min-width:80px">AI Acknowledgement</th>
+        </tr>
+      </thead>`;
+
+    const rows = aiUseLevels.map((level, index) => {
+        const bg = index % 2 === 0 ? '#ffffff' : '#f7f7f7';
+        return `
+          <tr style="background:${bg}">
+            <td style="vertical-align:top;padding:8px;border:1px solid #ddd;">${escapeHtml(level.task ?? '')}</td>
+            <td style="vertical-align:top;padding:8px;border:1px solid #ddd;">${escapeHtml(level.aiUseScaleLevel_name ?? '')}</td>
+            <td style="vertical-align:top;padding:8px;border:1px solid #ddd;">${escapeHtml(level.instructions ?? '')}</td>
+            <td style="vertical-align:top;padding:8px;border:1px solid #ddd;">${escapeHtml(level.examples ?? '')}</td>
+            <td style="vertical-align:top;padding:8px;border:1px solid #ddd;">${escapeHtml(level.aiGeneratedContent ?? '')}</td>
+            <td style="vertical-align:top;padding:8px;border:1px solid #ddd;">${level.acknowledgement ? 'Yes' : 'No'}</td>
+          </tr>`;
+      }).join('');
+    
+    const style = `
+      <style>
+        @page { margin: 20mm; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; color:#0f172a; font-size:12px; }
+        h1 { font-size:18px; margin-bottom:8px; }
+        table { border-collapse: collapse; width:100%; margin-top:8px; }
+        th { background:#f1f5f9; font-weight:600; }
+        td, th { word-break:break-word; }
+      </style>`;
+    
+    return `<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${escapeHtml(guidelinesTitle)}</title>
+          ${style}
+        </head>
+        <body>
+          <h1>${escapeHtml(guidelinesTitle)}</h1>
+          <div>${escapeHtml(assessmentType ?? '')}</div>
+          <table>
+            ${tableHeader}
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </body>
+      </html>`;
+  };
+
+  const handleExportPDF = async () => {
+    const html = buildPrintableHTML();
+
+    try {
+      const mod = await import('print-js');
+      const printJS = (mod && (mod as any).default) ? (mod as any).default : mod;
+      // print-js supports raw HTML printing via type: 'raw-html'
+      // some versions accept "printable" as string HTML for 'raw-html'
+      try {
+        (printJS as any)({
+          printable: html,
+          type: 'raw-html',
+          documentTitle: guidelinesTitle,
+        });
+        return;
+      } catch (innerErr) {
+        // fallthrough to window.open fallback below
+      }
+    } catch (err) {
+      // continue to fallback
+    }
+
+    // open a print window using our prepared HTML
+    const w = window.open('', '_blank', 'noopener,noreferrer');
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    // delay to load styles
+    setTimeout(() => {
+      w.print();
+      w.close();
+    }, 250);
+  };
+
 
   return (
     <div className="flex h-[calc(100vh-120px)]">
@@ -391,7 +485,7 @@ export default function AIGuidelinesBuilder() {
       {/* AI Guidelines Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" id="guidelines-table">
             <table className="w-full">
               <thead>
                 <tr className="border-b">
@@ -493,7 +587,7 @@ export default function AIGuidelinesBuilder() {
               {aiUseLevels.length} AI use levels defined{assessmentType && ` • ${assessmentType}`}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline">Export Guidelines</Button>
+              <Button variant="outline" onClick={handleExportPDF}>Export Guidelines</Button>
               <Button onClick={handleSaveGuidelines} disabled={isSaving}>{isSaving ? "Saving…" : "Save Guidelines"}</Button>
             </div>
           </div>

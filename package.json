@@ -24,6 +24,7 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.544.0",
     "next": "^15.5.0",
+    "print-js": "^1.6.0",
     "radix-ui": "^1.4.3",
     "react": "19.1.0",
     "react-bootstrap": "^2.10.10",

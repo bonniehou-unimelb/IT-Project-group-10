@@ -1,21 +1,19 @@
 "use client";
-import SubjectCoordStats from './subjectCoordStats';
-import StudentStats from './studentStats';
-import SystemAdminStats from './systemAdminStats';
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/card';
 import { Button } from '../components/button';
 import { Badge } from '../components/badge';
-import { Avatar, AvatarFallback } from '../components/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/dialog';
 import { ScrollArea } from '../components/scroll-area';
 import { Input } from '../components/input';
 import { Label } from '../components/label';
 import { useRouter } from 'next/navigation';
 import { SideBar } from '../components/sidebar';
+import { TopBar } from '../components/topbar';
 
 import { 
-  FileText, Plus, BookOpen, Users, Clock, TrendingUp, ArrowRight, Settings, Bell
+  FileText, Plus, BookOpen, Users, TrendingUp, ArrowRight, Settings,
 } from 'lucide-react';
 
 type UserRole = 'subjectCoord' | 'student' | 'systemAdmin';
@@ -25,20 +23,35 @@ interface SubjectCoordData {
   myTemplates: number;
   activeTemplates: number;
   activeSubjects: number;
-  subjects: any[];
-  allSubjects: any[];
+  subjects: Subject[];
+  allSubjects: Subject[];
 }
 
 interface StudentData {
   enrolledSubjects: number;
   assignedTemplates: number;
   upcomingDeadlines: number;
-  subjects: any[];
-  allSubjects: any[];
+  subjects: Subject[];
+  allSubjects: Subject[];
 }
 
 interface SystemAdminData {
   myTemplates: number;
+}
+
+interface Template {
+  name: string;
+  status: string;
+  assignedDate: string;
+  dueDate: string;
+}
+
+interface Subject {
+  name: string;
+  code: string;
+  students?: number;
+  templates?: number;
+  assignedTemplates?: Template[];
 }
 
 type HomePageData =
@@ -55,35 +68,66 @@ interface HomePageProps {
 export default function HomePage({ onNavigate, userRole, userName }: HomePageProps) {
   const [isSubjectsDialogOpen, setIsSubjectsDialogOpen] = useState(false);
   const [isAddSubjectDialogOpen, setIsAddSubjectDialogOpen] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<Subject>({
+    name: '',
+    code: '',
+    students: 0,
+    templates: 0,
+    assignedTemplates: []
+  });
+  const [isSubjectDetailOpen, setIsSubjectDetailOpen] = useState(false);
   const [newSubject, setNewSubject] = useState({
     name: '',
     code: '',
-    semester: 'Semester 1 2025',
     students: 0,
-    templates: 0
+    templates: 0,
+    assignedTemplates: []
   });
 
   const router = useRouter();
+  
 
   /* Mock subjects data */
   const [subjectsData, setSubjectsData] = useState({
     subjectCoord: {
       allSubjects: [
-        { name: 'Foundations of Computing', code: 'COMP10001', students: 28, templates: 3, semester: 'Semester 1 2025' },
-        { name: 'Models of Computation', code: 'COMP30026', students: 45, templates: 2, semester: 'Semester 1 2025' },
-        { name: 'Competition and Strategy', code: 'ECON20005', students: 32, templates: 3, semester: 'Semester 1 2025' },
+        { name: 'Foundations of Computing', code: 'COMP10001', students: 28, templates: 3, 
+          assignedTemplates: [
+            { name: 'Assignment 1', status: 'active', assignedDate: '2025-12-31', dueDate: '2025-12-31' },
+            { name: 'Assignment 2', status: 'active', assignedDate: '2025-12-31', dueDate: '2025-12-31' },
+          ]
+        },
+        { name: 'Models of Computation', code: 'COMP30026', students: 45, templates: 2,
+          assignedTemplates: [
+            { name: 'Assignment 1', status: 'inactive', assignedDate: '2025-12-31', dueDate: '2025-12-31' },
+            { name: 'Assignment 2', status: 'active', assignedDate: '2025-12-31', dueDate: '2025-12-31' },
+          ]
+        },
+        { name: 'Competition and Strategy', code: 'ECON20005', students: 32, templates: 3, assignedTemplates: [
+            { name: 'Assignment 1', status: 'inactive', assignedDate: '2025-12-31', dueDate: '2025-12-31' },
+          ]},
       ]
     },
     student: {
       allSubjects: [
-        { name: 'Elements of Data Processing', code: 'COMP20008', templates: 2, deadline: 'Tomorrow', semester: 'Semester 1 2025' },
-        { name: 'Linear Algebra', code: 'MAST10007', templates: 1, deadline: '3 days', semester: 'Semester 1 2025' },
+        { name: 'Elements of Data Processing', code: 'COMP20008', templates: 2, 
+          assignedTemplates: [
+            { name: 'Assignment 1', status: 'active', assignedDate: '2025-12-31', dueDate: '2025-12-31' },
+            { name: 'Assignment 2', status: 'active', assignedDate: '2025-12-31', dueDate: '2025-12-31' },
+          ]
+        },
+        { name: 'Linear Algebra', code: 'MAST10007', templates: 1,
+          assignedTemplates: [
+            { name: 'Assignment 1', status: 'inactive', assignedDate: '2025-12-31', dueDate: '2025-12-31' },
+            { name: 'Assignment 2', status: 'active', assignedDate: '2025-12-31', dueDate: '2025-12-31' },
+          ]
+        },
       ]
     },
 
     systemAdmin: {
       allSubjects: [
-        { name: 'Foundations of Computing', code: 'COMP10001', students: 28, templates: 3, semester: 'Semester 1 2025' },
+        { name: 'Foundations of Computing', code: 'COMP10001', students: 28, templates: 3},
       ]
     }
   });
@@ -109,7 +153,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
     }
   };
 
-  // Assign role-based data
+  /* Assign role-based data */
   let data: HomePageData;
 
   switch (userRole) {
@@ -136,6 +180,7 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
     setSubjectsData(prev => ({
       ...prev,
       subjectCoord: {
+        ...prev.subjectCoord,
         allSubjects: [...prev.subjectCoord.allSubjects, newSubjectData]
       }
     }));
@@ -143,22 +188,28 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
     setNewSubject({
       name: '',
       code: '',
-      semester: 'Semester 1 2025',
       students: 0,
-      templates: 0
+      templates: 0,
+      assignedTemplates: []
     });
 
     setIsAddSubjectDialogOpen(false);
   };
 
+const handleViewSubjectDetails = (subject: Subject) => {
+  setSelectedSubject(subject);
+  setIsSubjectDetailOpen(true);
+};
 
-
-  return (
-    <div className="min-h-screen bg-gray-50">
+return (
+  <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <SideBar />
-
+        {/* Main column */}
+        <div className="flex-1 flex flex-col">
+          {/* Top bar */}
+          < TopBar pageName="Homepage" subtitle =""/>
         {/* Main Content */}
         <div className="flex-1">
           <div className="max-w-7xl mx-auto p-6">
@@ -174,162 +225,534 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
                     : 'View AI guidelines for your assessments.'}
                 </p>
               </div>
-
-              {/* Notifications */}
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" className="relative">
-                  <Bell className="h-4 w-4 mr-2" />
-                  Notifications
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full"></span>
-                </Button>
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {userName.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
             </div>
-            
-            {/*Here, we include a quick actions and community templates section*/}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Plus className="h-5 w-5 text-primary" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {userRole === 'subjectCoord' ? (
-                    <>
-                      <Button 
-                        className="w-full justify-start h-12 bg-blue-600 text-primary-foreground hover:bg-blue-700" 
-                        onClick={() => router.push('/templates/new')}
-                      >
-                        <Plus className="h-4 w-4 mr-3" />
-                        Create New AI Guidelines
-                      </Button>
-                      <Button 
-                        className="w-full justify-start h-11" 
+
+            {/*Subject Coordinators: Quick Actions and Community Templates */}
+            {userRole === 'subjectCoord' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+
+                {/* Quick actions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Plus className="h-5 w-5 text-primary" />
+                      Quick Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button
+                      className="w-full justify-start h-12 bg-blue-600 text-primary-foreground hover:bg-blue-700"
+                      onClick={() => router.push('/templates/new')}
+                    >
+                      <Plus className="h-4 w-4 mr-3" />
+                      Create New AI Guidelines
+                    </Button>
+                    <Button
+                      className="w-full justify-start h-11"
+                      variant="outline"
+                      onClick={() => router.push('/myTemplates')}
+                    >
+                      <FileText className="h-4 w-4 mr-3" />
+                      View My Templates
+                    </Button>
+                    <Button
+                      className="w-full justify-start h-11"
+                      variant="outline"
+                      onClick={() => router.push('/allTemplates')}
+                    >
+                      <BookOpen className="h-4 w-4 mr-3" />
+                      Browse All Templates
+                    </Button>
+                    <Button className="w-full justify-start h-11" variant="outline">
+                      <Users className="h-4 w-4 mr-3" />
+                      Manage Subjects
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Community templates */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        Community Templates
+                      </CardTitle>
+                      <Button
                         variant="outline"
-                        onClick={() => router.push('/myTemplates')}
-                      >
-                        <FileText className="h-4 w-4 mr-3" />
-                        View My Templates
-                      </Button>
-                      <Button 
-                        className="w-full justify-start h-11" 
-                        variant="outline"
+                        size="sm"
                         onClick={() => router.push('/allTemplates')}
                       >
-                        <BookOpen className="h-4 w-4 mr-3" />
-                        Browse All Templates
+                        View All
+                        <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
-                      <Button 
-                        className="w-full justify-start h-11" 
-                        variant="outline"
-                      >
-                        <Users className="h-4 w-4 mr-3" />
-                        Manage Subjects
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button className="w-full justify-start h-12 bg-primary text-primary-foreground hover:bg-primary/90">
-                        <FileText className="h-4 w-4 mr-3" />
-                        View Active Guidelines
-                      </Button>
-                      <Button className="w-full justify-start h-11" variant="outline">
-                        <Clock className="h-4 w-4 mr-3" />
-                        Upcoming Deadlines
-                      </Button>
-                      <Button className="w-full justify-start h-11" variant="outline">
-                        <BookOpen className="h-4 w-4 mr-3" />
-                        My Subjects
-                      </Button>
-                      <Button className="w-full justify-start h-11" variant="outline">
-                        <Settings className="h-4 w-4 mr-3" />
-                        Submission History
-                      </Button>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Mock community templates */}
+                    <div className="space-y-3">
+                      {[
+                        { title: 'Research Paper Template', author: 'Dr. Johnson', tag: 'Science' },
+                        { title: 'STEM Lab Template', author: 'Mr. Smith', tag: 'Science' },
+                        { title: 'Creative Writing Template', author: 'Dr. Han', tag: 'Arts' },
+                        { title: 'Programming Assignment Template', author: 'Prof. Wang', tag: 'IT' },
+                      ].map((tpl: { title: string; author: string; tag: string}, idx: number) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                        >
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium">{tpl.title}</h4>
+                            <p className="text-xs text-muted-foreground">{tpl.author}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="secondary" className="text-xs">
+                                {tpl.tag}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">100 downloads</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
-
-              {/* Community Templates */}
-              <Card>
+            {/*Students: AI Guidelines grouped by subject*/}
+            {userRole === 'student' && (
+              <Card className="mb-8">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-primary" />
-                      Community Templates
-                    </CardTitle>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => router.push("/allTemplates")}
-                    >
-                      View All
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </div>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    My AI Guidelines Templates
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    View all AI use guidelines assigned to you, organized by subject
+                  </p>
                 </CardHeader>
-                <CardContent className="space-y-4">
 
-                  {/* Mock community templates*/}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                      <div className="flex-1">
-                        <h4 className="text-sm font-medium">Research Paper Template</h4>
-                        <p className="text-xs text-muted-foreground">Dr. Johnson</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">Science</Badge>
-                          <span className="text-xs text-muted-foreground">100 downloads</span>
-                        </div>
-                      </div>
-                    </div>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {data.role === 'student'             
+                      ? data.data.allSubjects.map((subject: Subject, subjectIndex: number) => (
+                      <Card key={subjectIndex} className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <CardTitle className="text-lg">{subject.name}</CardTitle>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {subject.code}
+                              </p>
+                            </div>
+                          </div>
+                        </CardHeader>
 
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                      <div className="flex-1">
-                        <h4 className="text-sm font-medium">STEM Lab Template</h4>
-                        <p className="text-xs text-muted-foreground">Mr. Smith</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">Science</Badge>
-                          <span className="text-xs text-muted-foreground">100 downloads</span>
-                        </div>
-                      </div>
-                    </div>
+                        <CardContent className="pt-0">
+                          {subject.assignedTemplates && subject.assignedTemplates.filter(t => t.status === 'active').length > 0 ? (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-sm font-medium">AI Guidelines</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {subject.assignedTemplates.filter(t => t.status === 'active').length} active
+                                </Badge>
+                              </div>
 
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                      <div className="flex-1">
-                        <h4 className="text-sm font-medium">Creative Writing Template</h4>
-                        <p className="text-xs text-muted-foreground">Dr. Han</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">Arts</Badge>
-                          <span className="text-xs text-muted-foreground">100 downloads</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                      <div className="flex-1">
-                        <h4 className="text-sm font-medium">Programming Assignment Template</h4>
-                        <p className="text-xs text-muted-foreground">Prof. Wang</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">IT</Badge>
-                          <span className="text-xs text-muted-foreground">100 downloads</span>
-                        </div>
-                      </div>
-                    </div>
+                              <div className="space-y-2">
+                                {subject.assignedTemplates
+                                  .filter(template => template.status === 'active')
+                                  .map((template: Template, templateIndex: number) => (
+                                    <div key={templateIndex} className="flex items-center justify-between p-3 border rounded-lg bg-background hover:bg-muted/50 transition-colors">
+                                      <div className="flex-1">
+                                        <h6 className="text-sm font-medium">{template.name}</h6>
+                                        <p className="text-xs text-muted-foreground">
+                                          Due: {new Date(template.dueDate).toLocaleDateString()}
+                                        </p>
+                                      </div>
+                                      <Button size="sm" variant="outline" className="text-xs h-8">
+                                        View
+                                      </Button>
+                                    </div>
+                                  ))}
+                              </div>
+                              <Button size="sm" variant="outline" className="w-full mt-3">
+                                View All Templates
+                                <ArrowRight className="h-3 w-3 ml-2" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="text-center py-6 text-muted-foreground">
+                              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                              <p className="text-sm">No active guidelines for this subject</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )) : null}
                   </div>
                 </CardContent>
               </Card>
-            </div>
-            </div>
+            )}
+
+            {/* Subjects overview */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    {userRole === 'subjectCoord' ? 'My Subjects' : 'Enrolled Subjects'}
+                  </CardTitle>
+
+                  {/*View all subjects */}
+                  <Dialog open={isSubjectsDialogOpen} onOpenChange={setIsSubjectsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        View All
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh]">
+                      <DialogHeader>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <DialogTitle>
+                              {userRole === 'subjectCoord'
+                                ? 'All My Subjects'
+                                : 'All Enrolled Subjects'}
+                            </DialogTitle>
+                            <DialogDescription>
+                              {userRole === 'subjectCoord'
+                                ? 'View and manage all subjects you are currently teaching.'
+                                : 'View all subjects you are currently enrolled in.'}
+                            </DialogDescription>
+                          </div>
+
+                          {/* Add subject as subject coordinator*/}
+                          {userRole === 'subjectCoord' && (
+                            <Dialog
+                              open={isAddSubjectDialogOpen}
+                              onOpenChange={setIsAddSubjectDialogOpen}
+                            >
+                              <DialogTrigger asChild>
+                                <Button size="sm">
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add Subject
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>Add New Subject</DialogTitle>
+                                  <DialogDescription>
+                                    Create a new subject that you'll be teaching.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor="subject-name">Subject Name</Label>
+                                    <Input
+                                      id="subject-name"
+                                      placeholder="e.g., Foundations of Computing"
+                                      value={newSubject.name}
+                                      onChange={(e) =>
+                                        setNewSubject((prev) => ({
+                                          ...prev,
+                                          name: e.target.value,
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="subject-code">Subject Code</Label>
+                                    <Input
+                                      id="subject-code"
+                                      placeholder="e.g., COMP10001"
+                                      value={newSubject.code}
+                                      onChange={(e) =>
+                                        setNewSubject((prev) => ({
+                                          ...prev,
+                                          code: e.target.value,
+                                        }))
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className="flex gap-2 pt-4">
+                                    <Button
+                                      onClick={() => setIsAddSubjectDialogOpen(false)}
+                                      variant="outline"
+                                      className="flex-1"
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      onClick={handleAddSubject}
+                                      className="flex-1"
+                                      disabled={!newSubject.name || !newSubject.code}
+                                    >
+                                      Add Subject
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          )}
+                        </div>
+                      </DialogHeader>
+
+                      {/* Scrollable subject List */}
+                      <ScrollArea className="h-[60vh] pr-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {data.role === 'subjectCoord' || data.role === 'student'
+                            ? data.data.allSubjects.map((subject: Subject, index: number) => (
+                                <Card
+                                  key={index}
+                                  className="hover:shadow-md transition-shadow"
+                                >
+                                  <CardContent className="p-4">
+                                    <div className="space-y-3">
+                                      <div>
+                                        <h4 className="font-medium">{subject.name}</h4>
+                                        <p className="text-sm text-muted-foreground">
+                                          {subject.code}
+                                        </p>
+                                      </div>
+
+                                      <div className="flex items-center justify-between text-sm">
+                                        {userRole === 'subjectCoord' ? (
+                                          <>
+                                            <span className="text-muted-foreground">
+                                              {subject.students} students
+                                            </span>
+                                            <Badge variant="secondary">
+                                              {subject.templates} templates
+                                            </Badge>
+                                          </>
+                                        ) : null}
+                                      </div>
+
+                                      <div className="flex gap-2">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="flex-1"
+                                          onClick={() => handleViewSubjectDetails(subject)}
+                                        >
+                                          View Details
+                                        </Button>
+                                        {userRole === 'subjectCoord' && (
+                                          <Button size="sm" variant="outline">
+                                            Manage
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))
+                            : null}
+                        </div>
+                      </ScrollArea>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+
+              {/*Subject grid */}
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {data.role === 'subjectCoord' || data.role === 'student'
+                    ? data.data.subjects.map((subject: Subject, index: number) => (
+                        <Card
+                          key={index}
+                          className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 group border-l-4 border-l-primary/20 hover:border-l-primary"
+                        >
+                          <CardContent className="p-5">
+                            <div className="space-y-3">
+                              <div>
+                                <h4 className="font-semibold group-hover:text-primary transition-colors">
+                                  {subject.name}
+                                </h4>
+                                <p className="text-sm text-muted-foreground font-medium">
+                                  {subject.code}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center justify-between text-sm">
+                                {userRole === 'subjectCoord' ? (
+                                  <>
+                                    <span className="text-muted-foreground flex items-center gap-1">
+                                      <Users className="h-3 w-3" />
+                                      {subject.students} students
+                                    </span>
+                                    <Badge
+                                      variant="secondary"
+                                      className="bg-primary/10 text-primary border-primary/20"
+                                    >
+                                      {subject.templates} templates
+                                    </Badge>
+                                  </>
+                                ) : null}
+                              </div>
+
+                              <div className="pt-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all"
+                                  onClick={() => handleViewSubjectDetails(subject)}
+                                >
+                                  View Details
+                                  <ArrowRight className="h-3 w-3 ml-2" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    : null}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/*Subject details */}
+            <Dialog open={isSubjectDetailOpen} onOpenChange={setIsSubjectDetailOpen}>
+              <DialogContent className="max-w-4xl max-h-[80vh]">
+                <ScrollArea className="h-[60vh] pr-4">
+                  <div className="space-y-6">
+                    {/* Subject info */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Subject Information</CardTitle>
+                      </CardHeader>
+                      <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Subject Code</p>
+                          <p className="font-medium">{selectedSubject.code}</p>
+                        </div>
+
+                        {userRole === 'subjectCoord' && (
+                          <div>
+                            <p className="text-sm text-muted-foreground">Templates</p>
+                            <p className="font-medium">{selectedSubject.templates ?? 0}</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Assigned templates */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <FileText className="h-5 w-5 text-primary" />
+                          Assigned AI Guidelines Templates
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {(() => {
+                          const assigned = selectedSubject.assignedTemplates ?? [];
+                          const activeTemplates = assigned.filter(t => t.status === 'active');
+                          const inactiveTemplates = assigned.filter(t => t.status === 'inactive');
+
+                          if (assigned.length === 0) return null;
+
+                          return (
+                            <div className="space-y-4">
+                              {/* Active templates */}
+                              {activeTemplates.length > 0 && (
+                                <div>
+                                  <h4 className="font-medium text-green-700 mb-3 flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    Active Templates ({activeTemplates.length})
+                                  </h4>
+                                  <div className="grid gap-3">
+                                    {activeTemplates.map((template, index) => (
+                                      <div
+                                        key={index}
+                                        className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
+                                      >
+                                        <div className="flex-1">
+                                          <h5 className="font-medium text-green-900">{template.name}</h5>
+                                          <p className="text-sm text-green-700">
+                                            Assigned: {new Date(template.assignedDate).toLocaleDateString()} •
+                                            Due: {new Date(template.dueDate).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                        <Badge className="bg-green-100 text-green-800 border-green-300">
+                                          Active
+                                        </Badge>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Inactive templates */}
+                              {inactiveTemplates.length > 0 && (
+                                <div>
+                                  <h4 className="font-medium text-gray-600 mb-3 flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                    Inactive Templates ({inactiveTemplates.length})
+                                  </h4>
+                                  <div className="grid gap-3">
+                                    {inactiveTemplates.map((template, index) => (
+                                      <div
+                                        key={index}
+                                        className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg"
+                                      >
+                                        <div className="flex-1">
+                                          <h5 className="font-medium text-gray-700">{template.name}</h5>
+                                          <p className="text-sm text-gray-600">
+                                            Assigned: {new Date(template.assignedDate).toLocaleDateString()} •
+                                            Due: {new Date(template.dueDate).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                        <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                                          Inactive
+                                        </Badge>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {assigned.length === 0 && (
+                                <div className="text-center py-8 text-muted-foreground">
+                                  <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                                  <p>No AI guidelines templates assigned to this subject yet.</p>
+                                  {userRole === 'subjectCoord' && (
+                                    <Button className="mt-3" variant="outline" size="sm">
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Assign Template
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+
+                    {userRole === 'subjectCoord' && (
+                      <div className="flex gap-2">
+                        <Button className="flex-1">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Assign New Template
+                        </Button>
+                        <Button variant="outline" className="flex-1">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Manage Subject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
+    </div>
+  </div>
   );
 }

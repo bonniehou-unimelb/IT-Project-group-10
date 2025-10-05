@@ -20,7 +20,12 @@ export type TemplateSummary = {
   isTemplate: boolean;
 };
 
-function TopBar() {
+type TopBarProps = {
+  pageName?: string;
+  subtitle?: string;
+};
+
+function TopBar({ pageName = "Dashboard", subtitle = "Welcome back!"}: TopBarProps) {
     const router = useRouter();
     const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
     const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
@@ -52,8 +57,8 @@ function TopBar() {
         <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-200">
             <div className={`${layout} py-3 flex items-center justify-between`}>
                 <div className="leading-tight">
-                    <p className="text-xs sm:text-sm text-gray-500">Dashboard</p>
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Welcome back!</h1>
+                    <p className="text-xs sm:text-sm text-gray-500">{pageName}</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{subtitle}</h1>
                 </div>
                 <Menu
                     menuButton={<MenuButton className="px-3 py-2 rounded-md border">{username} ▿</MenuButton>}

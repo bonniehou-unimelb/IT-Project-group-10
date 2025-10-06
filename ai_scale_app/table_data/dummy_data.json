@@ -339,5 +339,89 @@
       "aiGeneratedContent": "Must be properly cited",
       "useAcknowledgement": true
     }
+  }, 
+  {
+    "model": "ai_scale_app.template",
+    "pk": 6,
+    "fields": {
+      "ownerId": 2,
+      "name": "Base Template",
+      "scope": "Undergraduate FEIT",
+      "description": "",
+      "subject": 6,
+      "version": 1,
+      "isPublishable": true,
+      "isTemplate": true
+    }
+  }, 
+  {
+    "model": "ai_scale_app.templateitem",
+    "pk": 6,
+    "fields": {
+      "templateId_id": 6,
+      "task": "NA",
+      "aiUseScaleLevel_id": 5,
+      "instructionsToStudents": "instructions placeholder",
+      "examples": "example placeholder",
+      "aiGeneratedContent": "NA",
+      "useAcknowledgement": false
+    }
+  },
+  {
+    "model": "ai_scale_app.templateitem",
+    "pk": 7,
+    "fields": {
+      "templateId_id": 6,
+      "task": "NA",
+      "aiUseScaleLevel_id": 5,
+      "instructionsToStudents": "instructions placeholder",
+      "examples": "example placholder",
+      "aiGeneratedContent": "NA",
+      "useAcknowledgement": false
+    }
+  },
+  {
+    "model": "ai_scale_app.templateitem",
+    "pk": 8,
+    "fields": {
+      "templateId_id": 6,
+      "task": "NA",
+      "aiUseScaleLevel_id": 5,
+      "instructionsToStudents": "instructions placeholder",
+      "examples": "example placeholder",
+      "aiGeneratedContent": "NA",
+      "useAcknowledgement": false
+    }
+  },
+  {
+    "model": "ai_scale_app.templateitem",
+    "pk": 9,
+    "fields": {
+      "templateId_id": 6,
+      "task": "NA",
+      "aiUseScaleLevel_id": 5,
+      "instructionsToStudents": "instructions placeholder",
+      "examples": "example placeholder",
+      "aiGeneratedContent": "NA",
+      "useAcknowledgement": false
+    }
+  }, 
+{
+  "model": "ai_scale_app.aiusescale",
+  "pk": 5,
+  "fields": {
+    "name": "Very Broad AI use allowed"
   }
+},
+
+{
+  "model": "ai_scale_app.subject",
+  "pk": 6,
+  "fields": {
+    "name": "Base Subject Placeholder",
+    "subjectCode": "BASE00000",
+    "semester": 1,
+    "year": 2024
+  }
+}
 ]

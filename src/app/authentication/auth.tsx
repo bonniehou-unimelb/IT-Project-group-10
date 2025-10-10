@@ -13,6 +13,24 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+// Cookie session getters
+function getCookie(name: string) {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(^|; )${name}=([^;]*)`));
+  return m ? decodeURIComponent(m[2]) : null;
+}
+async function ensureCsrf(): Promise<string | null> {
+  let token = getCookie("csrftoken");
+  if (!token) {
+    const res = await fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" });
+    try {
+      const body = await res.json();
+      token = body?.csrfToken || getCookie("csrftoken");
+    } catch {}
+  }
+  return token;
+}
+
 //API helper calls for authentication (logout, user session)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -35,10 +53,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    const csrftoken = await ensureCsrf();
     await fetch(`${API_BACKEND_URL}/logout/`, {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrftoken ? { "X-CSRFToken": csrftoken, "X-Requested-With": "XMLHttpRequest" } : {}),
+      },
+      body: "{}", 
     });
     setUser(null);
   };

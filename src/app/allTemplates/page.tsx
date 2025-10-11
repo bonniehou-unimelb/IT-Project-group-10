@@ -54,6 +54,7 @@ export default function Dashboard() {
   const [query, setQuery] = useState("");
 
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
+  const [query, setQuery] = useState("");
 
   // Reroute to log in page if user session invalid
   useEffect(() => {

@@ -48,6 +48,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string>("");
   const [isCreating, setIsCreating] = useState(false);
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
+  const [query, setQuery] = useState<string>("");
 
   // Reroute to log in page if user session invalid
     useEffect(() => {

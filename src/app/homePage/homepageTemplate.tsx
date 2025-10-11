@@ -19,7 +19,7 @@ import {
   FileText, Plus, BookOpen, Users, TrendingUp, ArrowRight, Settings,
 } from 'lucide-react';
 
-type UserRole = 'Coordinator' | 'Student' | 'Admin';
+type UserRole = 'COORDINATOR' | 'STUDENT' | 'ADMIN';
 
 /* Defining the attributes for each user type */
 interface SubjectCoordData {
@@ -58,9 +58,9 @@ interface Subject {
 }
 
 type HomePageData =
-  | { role: 'Coordinator'; data: SubjectCoordData }
-  | { role: 'Student'; data: StudentData }
-  | { role: 'Admin'; data: SystemAdminData };
+  | { role: 'COORDINATOR'; data: SubjectCoordData }
+  | { role: 'STUDENT'; data: StudentData }
+  | { role: 'ADMIN'; data: SystemAdminData };
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
@@ -108,7 +108,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [username, setUsername] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  const [role, setRole] = useState<string>("student");
+  const [role, setRole] = useState<string>("");
 
   // Reroute to log in page if user session invalid
   useEffect(() => {
@@ -199,17 +199,17 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   };
 
   /* Assign role-based data */
-  let data: HomePageData = { role: "Student", data: mockData.student };
+  let data: HomePageData = { role: "STUDENT", data: mockData.student };
 
   switch (role) {
-    case 'Coordinator':
-      data = { role: 'Coordinator', data: mockData.subjectCoord };
+    case 'COORDINATOR':
+      data = { role: 'COORDINATOR', data: mockData.subjectCoord };
       break;
-    case 'Student':
-      data = { role: 'Student', data: mockData.student };
+    case 'STUDENT':
+      data = { role: 'STUDENT', data: mockData.student };
       break;
-    case 'Admin':
-      data = { role: 'Admin', data: mockData.systemAdmin };
+    case 'ADMIN':
+      data = { role: 'ADMIN', data: mockData.systemAdmin };
       break;
   }
 
@@ -246,6 +246,10 @@ const handleViewSubjectDetails = (subject: Subject) => {
   setIsSubjectDetailOpen(true);
 };
 
+if (role === "") {
+    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+}
+
 return (
   <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen">
@@ -265,15 +269,15 @@ return (
                   Welcome back 👋
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                  {role === 'Coordinator'
+                  {role === 'COORDINATOR'
                     ? 'Manage your AI guidelines and help students understand appropriate AI use.'
                     : 'View AI guidelines for your assessments.'}
                 </p>
               </div>
             </div>
 
-            {/*Subject Coordinators: Quick Actions and Community Templates */}
-            {role === 'Coordinator' && (
+            {/*Subject COORDINATORs: Quick Actions and Community Templates */}
+            {role === 'COORDINATOR' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
 
                 {/* Quick actions */}
@@ -365,7 +369,7 @@ return (
             )}
 
             {/*Students: AI Guidelines grouped by subject*/}
-            {role === 'Student' && (
+            {role === 'STUDENT' && (
               <Card className="mb-8">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -379,7 +383,7 @@ return (
 
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {data.role === 'Student'             
+                    {data.role === 'STUDENT'             
                       ? data.data.allSubjects.map((subject: Subject, subjectIndex: number) => (
                       <Card key={subjectIndex} className="hover:shadow-md transition-shadow">
                         <CardHeader className="pb-3">
@@ -445,7 +449,7 @@ return (
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <BookOpen className="h-5 w-5 text-primary" />
-                    {role === 'Coordinator' ? 'My Subjects' : 'Enrolled Subjects'}
+                    {role === 'COORDINATOR' ? 'My Subjects' : 'Enrolled Subjects'}
                   </CardTitle>
 
                   {/*View all subjects */}
@@ -461,19 +465,19 @@ return (
                         <div className="flex items-center justify-between">
                           <div>
                             <DialogTitle>
-                              {role === 'Coordinator'
+                              {role === 'COORDINATOR'
                                 ? 'All My Subjects'
                                 : 'All Enrolled Subjects'}
                             </DialogTitle>
                             <DialogDescription>
-                              {role === 'Coordinator'
+                              {role === 'COORDINATOR'
                                 ? 'View and manage all subjects you are currently teaching.'
                                 : 'View all subjects you are currently enrolled in.'}
                             </DialogDescription>
                           </div>
 
-                          {/* Add subject as subject coordinator*/}
-                          {role === 'Coordinator' && (
+                          {/* Add subject as subject COORDINATOR*/}
+                          {role === 'COORDINATOR' && (
                             <Dialog
                               open={isAddSubjectDialogOpen}
                               onOpenChange={setIsAddSubjectDialogOpen}
@@ -547,7 +551,7 @@ return (
                       {/* Scrollable subject List */}
                       <ScrollArea className="h-[60vh] pr-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {data.role === 'Coordinator' || data.role === 'Student'
+                          {data.role === 'COORDINATOR' || data.role === 'STUDENT'
                             ? data.data.allSubjects.map((subject: Subject, index: number) => (
                                 <Card
                                   key={index}
@@ -563,7 +567,7 @@ return (
                                       </div>
 
                                       <div className="flex items-center justify-between text-sm">
-                                        {role === 'Coordinator' ? (
+                                        {role === 'COORDINATOR' ? (
                                           <>
                                             <span className="text-muted-foreground">
                                               {subject.students} students
@@ -584,7 +588,7 @@ return (
                                         >
                                           View Details
                                         </Button>
-                                        {role === 'Coordinator' && (
+                                        {role === 'COORDINATOR' && (
                                           <Button size="sm" variant="outline">
                                             Manage
                                           </Button>
@@ -605,7 +609,7 @@ return (
               {/*Subject grid */}
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {data.role === 'Coordinator' || data.role === 'Student'
+                  {data.role === 'COORDINATOR' || data.role === 'STUDENT'
                     ? data.data.subjects.map((subject: Subject, index: number) => (
                         <Card
                           key={index}
@@ -623,7 +627,7 @@ return (
                               </div>
 
                               <div className="flex items-center justify-between text-sm">
-                                {role === 'Coordinator' ? (
+                                {role === 'COORDINATOR' ? (
                                   <>
                                     <span className="text-muted-foreground flex items-center gap-1">
                                       <Users className="h-3 w-3" />
@@ -675,7 +679,7 @@ return (
                           <p className="font-medium">{selectedSubject.code}</p>
                         </div>
 
-                        {role === 'Coordinator' && (
+                        {role === 'COORDINATOR' && (
                           <div>
                             <p className="text-sm text-muted-foreground">Templates</p>
                             <p className="font-medium">{selectedSubject.templates ?? 0}</p>
@@ -764,7 +768,7 @@ return (
                                 <div className="text-center py-8 text-muted-foreground">
                                   <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
                                   <p>No AI guidelines templates assigned to this subject yet.</p>
-                                  {role === 'Coordinator' && (
+                                  {role === 'COORDINATOR' && (
                                     <Button className="mt-3" variant="outline" size="sm">
                                       <Plus className="h-4 w-4 mr-2" />
                                       Assign Template
@@ -778,7 +782,7 @@ return (
                       </CardContent>
                     </Card>
 
-                    {role === 'Coordinator' && (
+                    {role === 'COORDINATOR' && (
                       <div className="flex gap-2">
                         <Button className="flex-1">
                           <Plus className="h-4 w-4 mr-2" />

@@ -25,7 +25,7 @@ type TopBarProps = {
   subtitle?: string;
 };
 
-function TopBar({ pageName = "Dashboard", subtitle = "Welcome back!"}: TopBarProps) {
+function TopBar({ pageName = "Dashboard"}: TopBarProps) {
     const router = useRouter();
     const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
     const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
@@ -58,7 +58,6 @@ function TopBar({ pageName = "Dashboard", subtitle = "Welcome back!"}: TopBarPro
             <div className={`${layout} py-3 flex items-center justify-between`}>
                 <div className="leading-tight">
                     <p className="text-xs sm:text-sm text-gray-500">{pageName}</p>
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{subtitle}</h1>
                 </div>
                 <Menu
                     menuButton={<MenuButton className="px-3 py-2 rounded-md border">{username} ▿</MenuButton>}

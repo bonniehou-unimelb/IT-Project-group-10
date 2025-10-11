@@ -33,7 +33,7 @@ export function SearchBar({ value, onChange, onSubmit, placeholder }: Props) {
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="pl-1 pr-10 py-3 min-w-250 bg-gray-200 border border-gray-300 rounded-xl text-gray-900 indent-2 hover:bg-gray-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="pl-1 pr-10 py-3 min-w-284 bg-gray-200 border border-gray-300 rounded-xl text-gray-900 indent-2 hover:bg-gray-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           placeholder={placeholder ?? "Search for a Template..."}
           aria-label="Search templates"
         />
@@ -44,19 +44,13 @@ export function SearchBar({ value, onChange, onSubmit, placeholder }: Props) {
               onChange("");
               inputRef.current?.focus();
             }}
-            className="absolute right-24 top-1/2 -translate-y-1/2 px-2 text-gray-600 hover:text-gray-800"
+            className="absolute right-1 top-1/2 -translate-y-1/2 px-2 text-gray-600 hover:text-gray-800"
             aria-label="Clear search"
             title="Clear"
           >
             ×
           </button>
         )}
-        <button
-          type="submit"
-          className="ml-2 min-h-10 min-w-20 py-3 px-4 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 shadow-lg transition"
-        >
-          Submit
-        </button>
       </form>
     </div>
   );

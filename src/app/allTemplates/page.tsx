@@ -162,15 +162,10 @@ export default function Dashboard() {
         {}
         <div className="flex-1 flex flex-col">
           {}
-          <TopBar />
+          <TopBar pageName="All Templates"/>
 
           {}
           <main className={`${layout} py-5`}>
-
-            {}
-            <h2 className="font-bold text-3xl">
-              All Templates
-            </h2>
             
             {}
             <div className="pt-3">

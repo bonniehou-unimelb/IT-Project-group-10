@@ -5,8 +5,6 @@ import HomePage from "./homepageTemplate";
 export default function Page() {
   return (
     <HomePage
-      userRole="student"
-      userName="Charlie Dan"
       onNavigate={(page) => console.log("Navigating to:", page)}
     />
   );

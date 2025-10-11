@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import AITemplateRepository from './AITemplateRepository';
 import { useTemplateDetails, createOrUpdateTemplateAction, addTemplateItemAction, deleteTemplateAction } from './api';
 import { useSearchParams } from "next/navigation";
+import { useAuth } from "../authentication/auth";
+import { useRouter } from "next/navigation";
 
 interface AIUseLevel {
   id: number | string;
@@ -32,16 +34,18 @@ interface TemplateScale {
 
 export default function AIGuidelinesBuilder() {
   //pass in the template_id of the template we want to display from dashboard page
+  const router = useRouter();
   const searchParams = useSearchParams();
   const templateID = (() => {
     const v = Number(searchParams.get("template_id"));
     return v; 
   })();
+  const [username, setUsername] = useState<string>("");
+  const { user, pageLoading, refresh } = useAuth();
 
   //Store temporarily the current fields of the form
   const [guidelinesTitle, setGuidelinesTitle] = useState('AI Use Guidelines for Assessment');
   const [assessmentType, setAssessmentType] = useState('');
-  const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
   const { data: payload, loading: detailLoading, error: detailErr, open, setData: setPayload } = useTemplateDetails(templateID);
   const [subjectCode, setSubjectCode] = useState<string>("");
   const [semester, setSemester] = useState<number>(1);
@@ -55,6 +59,17 @@ export default function AIGuidelinesBuilder() {
   const [error, setError] = useState<string | null>(null);
   const [templateId, setTemplateId] = useState<number | null>(null);
   const [currentVersion, setCurrentVersion] = useState<number>(0);
+
+  // Reroute to log in page if user session invalid
+  useEffect(() => {
+    if (!pageLoading && !user) router.replace("/login");
+  }, [pageLoading, user, router]);
+
+  useEffect(() => { refresh(); }, []); 
+
+  useEffect(() => {
+    if (user?.username) setUsername(user.username);
+  }, [user]);
 
   
   const [aiUseLevels, setAIUseLevels] = useState<AIUseLevel[]>([

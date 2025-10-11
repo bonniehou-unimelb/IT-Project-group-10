@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/card';
 import { Button } from '../components/button';
 import { Badge } from '../components/badge';
@@ -11,12 +11,15 @@ import { Label } from '../components/label';
 import { useRouter } from 'next/navigation';
 import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
+import { useAuth } from "../authentication/auth";
+
+const API_BACKEND_URL = "http://localhost:8000";
 
 import { 
   FileText, Plus, BookOpen, Users, TrendingUp, ArrowRight, Settings,
 } from 'lucide-react';
 
-type UserRole = 'subjectCoord' | 'student' | 'systemAdmin';
+type UserRole = 'COORDINATOR' | 'STUDENT' | 'ADMIN';
 
 /* Defining the attributes for each user type */
 interface SubjectCoordData {
@@ -55,17 +58,33 @@ interface Subject {
 }
 
 type HomePageData =
-  | { role: 'subjectCoord'; data: SubjectCoordData }
-  | { role: 'student'; data: StudentData }
-  | { role: 'systemAdmin'; data: SystemAdminData };
+  | { role: 'COORDINATOR'; data: SubjectCoordData }
+  | { role: 'STUDENT'; data: StudentData }
+  | { role: 'ADMIN'; data: SystemAdminData };
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
-  userRole: UserRole;
-  userName: string;
 }
 
-export default function HomePage({ onNavigate, userRole, userName }: HomePageProps) {
+// CSRF Cookie management
+function getCookie(name: string) {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(^|; )${name}=([^;]*)`));
+  return m ? decodeURIComponent(m[2]) : null;
+}
+async function ensureCsrf(): Promise<string | null> {
+  let token = getCookie("csrftoken");
+  if (!token) {
+    const res = await fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" });
+    try {
+      const body = await res.json();
+      token = body?.csrfToken || getCookie("csrftoken");
+    } catch {;}
+  }
+  return token;
+}
+
+export default function HomePage({ onNavigate }: HomePageProps) {
   const [isSubjectsDialogOpen, setIsSubjectsDialogOpen] = useState(false);
   const [isAddSubjectDialogOpen, setIsAddSubjectDialogOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject>({
@@ -85,6 +104,32 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
   });
 
   const router = useRouter();
+  const { user, pageLoading, refresh, logout } = useAuth();
+  const [username, setUsername] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [role, setRole] = useState<string>("");
+
+  // Reroute to log in page if user session invalid
+  useEffect(() => {
+    if (!pageLoading && !user) router.replace("/login");
+  }, [pageLoading, user, router]);
+
+  useEffect(() => { refresh(); }, []); 
+
+  useEffect(() => {
+    if (user?.username) setUsername(user.username);
+    if (user?.role) setRole(user.role);
+    console.log(username);
+    console.log(role);
+  }, [user]);
+
+  // Fetch cookie for user session
+  useEffect(() => {
+    if (!user) return;
+    fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" })
+      .catch(() => {;});
+  }, [user]);
   
 
   /* Mock subjects data */
@@ -154,17 +199,17 @@ export default function HomePage({ onNavigate, userRole, userName }: HomePagePro
   };
 
   /* Assign role-based data */
-  let data: HomePageData;
+  let data: HomePageData = { role: "STUDENT", data: mockData.student };
 
-  switch (userRole) {
-    case 'subjectCoord':
-      data = { role: 'subjectCoord', data: mockData.subjectCoord };
+  switch (role) {
+    case 'COORDINATOR':
+      data = { role: 'COORDINATOR', data: mockData.subjectCoord };
       break;
-    case 'student':
-      data = { role: 'student', data: mockData.student };
+    case 'STUDENT':
+      data = { role: 'STUDENT', data: mockData.student };
       break;
-    case 'systemAdmin':
-      data = { role: 'systemAdmin', data: mockData.systemAdmin };
+    case 'ADMIN':
+      data = { role: 'ADMIN', data: mockData.systemAdmin };
       break;
   }
 
@@ -201,6 +246,10 @@ const handleViewSubjectDetails = (subject: Subject) => {
   setIsSubjectDetailOpen(true);
 };
 
+if (role === "") {
+    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+}
+
 return (
   <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen">
@@ -217,18 +266,18 @@ return (
             <div className="mb-8 flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-foreground mb-2">
-                  Welcome back, {userName.split(' ')[0]} 👋
+                  Welcome back 👋
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                  {userRole === 'subjectCoord'
+                  {role === 'COORDINATOR'
                     ? 'Manage your AI guidelines and help students understand appropriate AI use.'
                     : 'View AI guidelines for your assessments.'}
                 </p>
               </div>
             </div>
 
-            {/*Subject Coordinators: Quick Actions and Community Templates */}
-            {userRole === 'subjectCoord' && (
+            {/*Subject COORDINATORs: Quick Actions and Community Templates */}
+            {role === 'COORDINATOR' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
 
                 {/* Quick actions */}
@@ -320,7 +369,7 @@ return (
             )}
 
             {/*Students: AI Guidelines grouped by subject*/}
-            {userRole === 'student' && (
+            {role === 'STUDENT' && (
               <Card className="mb-8">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -334,7 +383,7 @@ return (
 
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {data.role === 'student'             
+                    {data.role === 'STUDENT'             
                       ? data.data.allSubjects.map((subject: Subject, subjectIndex: number) => (
                       <Card key={subjectIndex} className="hover:shadow-md transition-shadow">
                         <CardHeader className="pb-3">
@@ -400,7 +449,7 @@ return (
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <BookOpen className="h-5 w-5 text-primary" />
-                    {userRole === 'subjectCoord' ? 'My Subjects' : 'Enrolled Subjects'}
+                    {role === 'COORDINATOR' ? 'My Subjects' : 'Enrolled Subjects'}
                   </CardTitle>
 
                   {/*View all subjects */}
@@ -416,19 +465,19 @@ return (
                         <div className="flex items-center justify-between">
                           <div>
                             <DialogTitle>
-                              {userRole === 'subjectCoord'
+                              {role === 'COORDINATOR'
                                 ? 'All My Subjects'
                                 : 'All Enrolled Subjects'}
                             </DialogTitle>
                             <DialogDescription>
-                              {userRole === 'subjectCoord'
+                              {role === 'COORDINATOR'
                                 ? 'View and manage all subjects you are currently teaching.'
                                 : 'View all subjects you are currently enrolled in.'}
                             </DialogDescription>
                           </div>
 
-                          {/* Add subject as subject coordinator*/}
-                          {userRole === 'subjectCoord' && (
+                          {/* Add subject as subject COORDINATOR*/}
+                          {role === 'COORDINATOR' && (
                             <Dialog
                               open={isAddSubjectDialogOpen}
                               onOpenChange={setIsAddSubjectDialogOpen}
@@ -502,7 +551,7 @@ return (
                       {/* Scrollable subject List */}
                       <ScrollArea className="h-[60vh] pr-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {data.role === 'subjectCoord' || data.role === 'student'
+                          {data.role === 'COORDINATOR' || data.role === 'STUDENT'
                             ? data.data.allSubjects.map((subject: Subject, index: number) => (
                                 <Card
                                   key={index}
@@ -518,7 +567,7 @@ return (
                                       </div>
 
                                       <div className="flex items-center justify-between text-sm">
-                                        {userRole === 'subjectCoord' ? (
+                                        {role === 'COORDINATOR' ? (
                                           <>
                                             <span className="text-muted-foreground">
                                               {subject.students} students
@@ -539,7 +588,7 @@ return (
                                         >
                                           View Details
                                         </Button>
-                                        {userRole === 'subjectCoord' && (
+                                        {role === 'COORDINATOR' && (
                                           <Button size="sm" variant="outline">
                                             Manage
                                           </Button>
@@ -560,7 +609,7 @@ return (
               {/*Subject grid */}
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {data.role === 'subjectCoord' || data.role === 'student'
+                  {data.role === 'COORDINATOR' || data.role === 'STUDENT'
                     ? data.data.subjects.map((subject: Subject, index: number) => (
                         <Card
                           key={index}
@@ -578,7 +627,7 @@ return (
                               </div>
 
                               <div className="flex items-center justify-between text-sm">
-                                {userRole === 'subjectCoord' ? (
+                                {role === 'COORDINATOR' ? (
                                   <>
                                     <span className="text-muted-foreground flex items-center gap-1">
                                       <Users className="h-3 w-3" />
@@ -630,7 +679,7 @@ return (
                           <p className="font-medium">{selectedSubject.code}</p>
                         </div>
 
-                        {userRole === 'subjectCoord' && (
+                        {role === 'COORDINATOR' && (
                           <div>
                             <p className="text-sm text-muted-foreground">Templates</p>
                             <p className="font-medium">{selectedSubject.templates ?? 0}</p>
@@ -719,7 +768,7 @@ return (
                                 <div className="text-center py-8 text-muted-foreground">
                                   <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
                                   <p>No AI guidelines templates assigned to this subject yet.</p>
-                                  {userRole === 'subjectCoord' && (
+                                  {role === 'COORDINATOR' && (
                                     <Button className="mt-3" variant="outline" size="sm">
                                       <Plus className="h-4 w-4 mr-2" />
                                       Assign Template
@@ -733,7 +782,7 @@ return (
                       </CardContent>
                     </Card>
 
-                    {userRole === 'subjectCoord' && (
+                    {role === 'COORDINATOR' && (
                       <div className="flex gap-2">
                         <Button className="flex-1">
                           <Plus className="h-4 w-4 mr-2" />

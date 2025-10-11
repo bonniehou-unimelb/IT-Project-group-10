@@ -78,7 +78,7 @@ def curr_user_session(request):
         return JsonResponse({"isAuthenticated": True, "user": {
             "username": curr_user.username, "role": getattr(curr_user, "role", None)
         }}, status=HTTPStatus.OK)
-    return JsonResponse({"isAauthenticated": False}, status=HTTPStatus.UNAUTHORIZED)
+    return JsonResponse({"isAuthenticated": False}, status=HTTPStatus.OK)
 
 
 # GET /info/taught_subjects/?username=...
@@ -383,7 +383,8 @@ def template_details(request):
     }, status=HTTPStatus.OK)
 
 
-# GET all older version numbers and their pk id's of a template  
+# GET 
+# 
 
 
 

@@ -42,11 +42,16 @@ async function ensureCsrf(): Promise<string | null> {
 export default function Dashboard() {
   const router = useRouter();
   const { user, pageLoading, refresh } = useAuth();
+
   const [templateSum, setTemplateSum] = useState<TemplateSummary[]>([]);
   const [username, setUsername] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [isCreating, setIsCreating] = useState(false);
+
+  // NEW: search state (controlled by SearchBar)
+  const [query, setQuery] = useState("");
+
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
 
   // Reroute to log in page if user session invalid
@@ -59,7 +64,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (user?.username) setUsername(user.username);
   }, [user]);
-
 
   const handleRowClick = (template_id: number) => {
     router.push(`/?template_id=${template_id}`);
@@ -95,6 +99,15 @@ export default function Dashboard() {
 
   const displayName = user?.username ?? "Account";
 
+  // NEW: client-side filtered list (works even if backend has no search)
+  const filtered = query.trim()
+    ? templateSum.filter((t) =>
+        [t.name, t.subjectCode, t.ownerName]
+          .filter(Boolean)
+          .some((s) => s.toLowerCase().includes(query.toLowerCase()))
+      )
+    : templateSum;
+
   // Handles creating new AI use scale from scratch
   const createNewScale = async () => {
     setIsCreating(true);
@@ -102,7 +115,6 @@ export default function Dashboard() {
 
     try {
       const csrftoken = await ensureCsrf();
-      const now = new Date();
       const payload = {
         username: user?.username ?? "",
         name: "New AI Use Scale",
@@ -112,8 +124,8 @@ export default function Dashboard() {
         scope: "",
         description: "",
         version: 0,          
-        isPublishable: false,  // start as non-publishable 
-        isTemplate: false,  // start as non-template
+        isPublishable: false,
+        isTemplate: false,
       };
 
       const res = await fetch(`${API_BACKEND_URL}/template/update/`, {
@@ -126,7 +138,6 @@ export default function Dashboard() {
         body: JSON.stringify(payload),
       });
 
-      // Fetch template ID only from backend 
       const text = await res.text();
       let body: any = {};
       try { body = JSON.parse(text); } catch {}
@@ -135,7 +146,6 @@ export default function Dashboard() {
         throw new Error(body?.error || text || "Failed to create template");
       }
 
-      //Route to default template creation with specified template ID
       router.push(`/?template_id=${body.templateId}`);
     } catch (e:any) {
       setError(String(e?.message ?? e) || "Failed to create template");
@@ -147,25 +157,28 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen">
-        {/* Sidebar */}
+        {}
         <SideBar />
-        {/* Main column */}
+        {}
         <div className="flex-1 flex flex-col">
-          {/* Top bar */}
-          < TopBar />
+          {}
+          <TopBar />
 
-          {/* Content */}
+          {}
           <main className={`${layout} py-5`}>
 
-            {/* Page Heading */}
+            {}
             <h2 className="font-bold text-3xl">
               All Templates
             </h2>
             
-            {/* Search Bar 
-              TODO: Make sure this actually filters the table */}
+            {}
             <div className="pt-3">
-              < SearchBar />
+              <SearchBar
+                value={query}
+                onChange={setQuery}
+                placeholder="Search by name, subject code, or owner…"
+              />
             </div>
 
             {loading && (
@@ -179,9 +192,9 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Table */}
+            {}
             <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white">
-                <table className="max-w table-auto text-sm">
+              <table className="max-w table-auto text-sm">
                 <thead className="bg-gray-50">
                   <tr className="text-left text-gray-700">
                     <th className="px-4 py-3 font-medium w-[24rem]">Template Name</th>
@@ -197,16 +210,20 @@ export default function Dashboard() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-100">
-                  {templateSum.length === 0 && (
+                  {filtered.length === 0 && !loading && (
                     <tr>
                       <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
-                        No templates yet.
+                        No {query ? "matching" : ""} templates{query ? " for your search." : " yet."}
                       </td>
                     </tr>
                   )}
 
-                  {templateSum.map((tpl) => (
-                    <tr key={tpl.templateId} className="hover:bg-gray-50" onClick={() => handleRowClick(tpl.templateId)}>
+                  {filtered.map((tpl) => (
+                    <tr
+                      key={tpl.templateId}
+                      className="hover:bg-gray-50"
+                      onClick={() => handleRowClick(tpl.templateId)}
+                    >
                       <td className="px-4 py-3 truncate">{tpl.name}</td>
                       <td className="px-4 py-3">{tpl.subjectCode}</td>
                       <td className="px-4 py-3 text-center">{tpl.semester}</td>
@@ -218,37 +235,37 @@ export default function Dashboard() {
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
                           <button
-                          className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
-                          onClick={(e) => {
-                            e.stopPropagation(); 
-                            router.push(`/?template_id=${tpl.templateId}`); 
-                          }}
-                        >
-                          Preview
-                        </button>
-                        <button
-                          className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50"
-                          onClick={async (e) => {
-                            e.stopPropagation(); // prevent row click
-                            try {
-                              const res = await fetch(`${API_BACKEND_URL}/template/duplicate/`, {
-                                method: "POST",
-                                credentials: "include",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ templateId: tpl.templateId }),
-                              });
-                              if (!res.ok) throw new Error("Failed to duplicate template");
+                            className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
+                            onClick={(e) => {
+                              e.stopPropagation(); 
+                              router.push(`/?template_id=${tpl.templateId}`); 
+                            }}
+                          >
+                            Preview
+                          </button>
+                          <button
+                            className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50"
+                            onClick={async (e) => {
+                              e.stopPropagation(); 
+                              try {
+                                const res = await fetch(`${API_BACKEND_URL}/template/duplicate/`, {
+                                  method: "POST",
+                                  credentials: "include",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ templateId: tpl.templateId }),
+                                });
+                                if (!res.ok) throw new Error("Failed to duplicate template");
 
-                              const data = await res.json();
-                              setTemplateSum((prev) => [data.new_template, ...prev]);
-                            } catch (err) {
-                              console.error(err);
-                              alert("Failed to duplicate template");
-                            }
-                          }}
-                        >
-                          Duplicate
-                        </button>
+                                const data = await res.json();
+                                setTemplateSum((prev) => [data.new_template, ...prev]);
+                              } catch (err) {
+                                console.error(err);
+                                alert("Failed to duplicate template");
+                              }
+                            }}
+                          >
+                            Duplicate
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -260,7 +277,7 @@ export default function Dashboard() {
             <p className="pl-1 pt-6 text-xl"> Or create your own!</p>
 
             <div className="pt-2">
-              < CreateTemplateButton />
+              <CreateTemplateButton />
             </div>
           </main>
         </div>

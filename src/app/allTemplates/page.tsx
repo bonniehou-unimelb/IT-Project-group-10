@@ -9,6 +9,7 @@ import { useAuth } from "../authentication/auth";
 
 const API_BACKEND_URL = "http://localhost:8000";
 
+
 export type TemplateSummary = {
   templateId: number;
   name: string;
@@ -162,15 +163,10 @@ export default function Dashboard() {
         {}
         <div className="flex-1 flex flex-col">
           {}
-          <TopBar />
+          <TopBar pageName="All Templates"/>
 
           {}
           <main className={`${layout} py-5`}>
-
-            {}
-            <h2 className="font-bold text-3xl">
-              All Templates
-            </h2>
             
             {}
             <div className="pt-3">
@@ -277,7 +273,18 @@ export default function Dashboard() {
             <p className="pl-1 pt-6 text-xl"> Or create your own!</p>
 
             <div className="pt-2">
-              <CreateTemplateButton />
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
+                onClick={() => {
+                  if (!user || isCreating) return;
+                  createNewScale();
+                  router.push("/templates/new");
+                }}
+                disabled={!user || isCreating}
+              >
+                + Create New AI Use Scale
+              </button>
             </div>
           </main>
         </div>

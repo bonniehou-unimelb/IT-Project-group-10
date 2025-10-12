@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../authentication/auth";
 const API_BACKEND_URL = "http://localhost:8000";
 
 export default function LoginPage() {
@@ -41,8 +42,7 @@ export default function LoginPage() {
       } else {
         console.log("Log in successful");
         //Redirect logged in user to their dashboard
-        // TO DO: redirect according to their user role
-        router.push("/myTemplates");
+        router.push("/homePage");
       }
     } catch (err){
       console.log("Server error");

@@ -5,6 +5,7 @@ import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
 import { SearchBar } from '../components/searchbar';
 import { CreateTemplateButton } from "../components/createTemplateButton";
+import { useAuth } from "../authentication/auth";
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -20,40 +21,127 @@ export type TemplateSummary = {
   isTemplate: boolean;
 };
 
+// CSRF Cookie management
+function getCookie(name: string) {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(^|; )${name}=([^;]*)`));
+  return m ? decodeURIComponent(m[2]) : null;
+}
+async function ensureCsrf(): Promise<string | null> {
+  let token = getCookie("csrftoken");
+  if (!token) {
+    const res = await fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" });
+    try {
+      const body = await res.json();
+      token = body?.csrfToken || getCookie("csrftoken");
+    } catch {;}
+  }
+  return token;
+}
+
 export default function Dashboard() {
   const router = useRouter();
+  const { user, pageLoading, refresh } = useAuth();
   const [templateSum, setTemplateSum] = useState<TemplateSummary[]>([]);
-  const [username, setUsername] = useState<string>("benconnor@unimelb.edu.au");
+  const [username, setUsername] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-
-  const [query, setQuery] = useState("");
-
+  const [isCreating, setIsCreating] = useState(false);
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
+  const [query, setQuery] = useState<string>("");
 
-  const handleRowClick = (template_id: number) => {
-    router.push(`/?template_id=${template_id}`);
-  };
-
-  useEffect(() => {
-    if (!username) return;
-    (async () => {
+  // Reroute to log in page if user session invalid
+    useEffect(() => {
+      if (!pageLoading && !user) router.replace("/login");
+    }, [pageLoading, user, router]);
+  
+    useEffect(() => { refresh(); }, []); 
+  
+    useEffect(() => {
+      if (user?.username) setUsername(user.username);
+    }, [user]);
+  
+  
+    const handleRowClick = (template_id: number) => {
+      router.push(`/?template_id=${template_id}`);
+    };
+  
+    // Fetch cookie for user session
+    useEffect(() => {
+      if (!user) return;
+      fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" })
+        .catch(() => {;});
+    }, [user]);
+  
+    // Fetch summary details of the templates the current user owns
+    useEffect(() => {
+      if (!username || !user) return; 
+      (async () => {
+        try {
+          setLoading(true);
+          setError("");
+          const res = await fetch(
+            `${API_BACKEND_URL}/template/summary/?username=${encodeURIComponent(user.username)}`,
+            { method: "GET", credentials: "include" }
+          );
+          const data = (await res.json()) as { templates: TemplateSummary[] };
+          setTemplateSum(data.templates || []);
+        } catch {
+          setError("Failed to load dashboard information");
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, [username]);
+    
+    // Handles creating new AI use scale from scratch
+    const createNewScale = async () => {
+      setIsCreating(true);
+      setError("");
+  
       try {
-        setLoading(true);
-        setError("");
-        const res = await fetch(
-          `${API_BACKEND_URL}/template/summary/?username=${encodeURIComponent(username)}`,
-          { method: "GET", credentials: "include" }
-        );
-        const data = (await res.json()) as { templates: TemplateSummary[] };
-        setTemplateSum(data.templates || []);
-      } catch {
-        setError("Failed to load dashboard information");
+        const csrftoken = await ensureCsrf();
+        const now = new Date();
+        const payload = {
+          username: user?.username ?? "",
+          name: "New AI Use Scale",
+          subjectCode: "DRAFT",
+          year: 2025,
+          semester: 1,
+          scope: "",
+          description: "",
+          version: 0,          
+          isPublishable: false,  // start as non-publishable 
+          isTemplate: false,  // start as non-template
+        };
+  
+        const res = await fetch(`${API_BACKEND_URL}/template/update/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrftoken ? { "X-CSRFToken": csrftoken, "X-Requested-With": "XMLHttpRequest" } : {}),
+          },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+  
+        // Fetch template ID only from backend 
+        const text = await res.text();
+        let body: any = {};
+        try { body = JSON.parse(text); } catch {}
+  
+        if (!res.ok || !body?.templateId) {
+          throw new Error(body?.error || text || "Failed to create template");
+        }
+  
+        //Route to default template creation with specified template ID
+        router.push(`/?template_id=${body.templateId}`);
+      } catch (e:any) {
+        setError(String(e?.message ?? e) || "Failed to create template");
       } finally {
-        setLoading(false);
+        setIsCreating(false);
       }
-    })();
-  }, [username]);
+    };
 
   const filtered = query.trim()
     ? templateSum.filter((t) =>
@@ -68,12 +156,23 @@ export default function Dashboard() {
       <div className="flex min-h-screen">
         <SideBar />
         <div className="flex-1 flex flex-col">
-          <TopBar />
+          <TopBar pageName="My Templates"/>
           <main className={`${layout} py-5`}>
             <h2 className="font-bold text-3xl">My Templates</h2>
 
             <div className="pt-6">
-              <CreateTemplateButton />
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
+                onClick={() => {
+                  if (!user || isCreating) return;
+                  createNewScale();
+                  router.push("/templates/new");
+                }}
+                disabled={!user || isCreating}
+              >
+                + Create New AI Use Scale
+              </button>
             </div>
 
             <p className="pt-7 text-xl">Or edit an existing template:</p>
@@ -125,11 +224,7 @@ export default function Dashboard() {
                   )}
 
                   {filtered.map((tpl) => (
-                    <tr
-                      key={tpl.templateId}
-                      className="hover:bg-gray-50"
-                      onClick={() => handleRowClick(tpl.templateId)}
-                    >
+                    <tr>
                       <td className="px-4 py-3 truncate">{tpl.name}</td>
                       <td className="px-4 py-3">{tpl.subjectCode}</td>
                       <td className="px-4 py-3 text-center">{tpl.semester}</td>
@@ -148,6 +243,10 @@ export default function Dashboard() {
                             }}
                           >
                             Preview
+                          </button>
+                          <button
+                            className="px-3 py-1 rounded-lg text-red-600 border border-red-400 hover:bg-red-50">
+                            Delete
                           </button>
                           {}
                         </div>

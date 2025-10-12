@@ -49,13 +49,25 @@ export default function Dashboard() {
   const [isCreating, setIsCreating] = useState(false);
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
   const [query, setQuery] = useState<string>("");
+  const [booted, setBooted] = useState(false);
+
+  //Single refresh to wait for cookie session 
+  useEffect(() => {
+    (async () => {
+      try { await refresh?.(); } finally { setBooted(true); }
+    })();
+  }, []);
 
   // Reroute to log in page if user session invalid
-    useEffect(() => {
-      if (!pageLoading && !user) router.replace("/login");
-    }, [pageLoading, user, router]);
+  useEffect(() => {
+    if (!booted) return;
+    if (pageLoading) return;
+    const t = setTimeout(() => {
+      if (!user) router.replace("/login");
+    }, 120); 
+    return () => clearTimeout(t);
+  }, [booted, pageLoading, user, router]);
   
-    useEffect(() => { refresh(); }, []); 
   
     useEffect(() => {
       if (user?.username) setUsername(user.username);
@@ -74,25 +86,25 @@ export default function Dashboard() {
     }, [user]);
   
     // Fetch summary details of the templates the current user owns
-    useEffect(() => {
-      if (!username || !user) return; 
-      (async () => {
-        try {
-          setLoading(true);
-          setError("");
-          const res = await fetch(
-            `${API_BACKEND_URL}/template/summary/?username=${encodeURIComponent(user.username)}`,
-            { method: "GET", credentials: "include" }
-          );
-          const data = (await res.json()) as { templates: TemplateSummary[] };
-          setTemplateSum(data.templates || []);
-        } catch {
-          setError("Failed to load dashboard information");
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }, [username]);
+  useEffect(() => {
+    if (!booted || pageLoading || !user?.username) return;
+    (async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const res = await fetch(
+          `${API_BACKEND_URL}/template/summary/?username=${encodeURIComponent(user.username)}`,
+          { method: "GET", credentials: "include", cache: "no-store" }
+        );
+        const data = (await res.json()) as { templates: TemplateSummary[] };
+        setTemplateSum(data.templates || []);
+      } catch {
+        setError("Failed to load dashboard information");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [booted, pageLoading, user]);
     
     // Handles creating new AI use scale from scratch
     const createNewScale = async () => {

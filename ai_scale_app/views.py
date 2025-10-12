@@ -5,12 +5,15 @@ from django.contrib.auth import authenticate, login as auth_login
 from .models import User, Subject, Template, TemplateItem, TemplateOwnership, Enrolment, AIUseScale
 from http import HTTPStatus
 from django.contrib.auth import logout as auth_logout
+from django.conf import settings
 from django.middleware.csrf import get_token
 import json
 import logging
 from django.db import IntegrityError
 import traceback
 from django.db.models import Max
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)    
 
@@ -85,7 +88,8 @@ def curr_user_session(request):
 @require_GET
 def enrolment_teaching(request):
     """
-    Get all subject info taught by the user
+    Get all subject info 'taught' by the user.
+    We infer 'taught' = subjects that have at least one Template owned by this user.
     """
     username = request.GET.get("username")
     if not username:
@@ -96,14 +100,15 @@ def enrolment_teaching(request):
     except User.DoesNotExist:
         return JsonResponse({"error": "User not found"}, status=HTTPStatus.NOT_FOUND)
 
-    if user.role in {User.Role.COORDINATOR, User.Role.STAFF}:
-        taught_subjects = list(
-            Subject.objects.filter(coordinatorId=user)
-                           .values("id", "name", "subjectCode")
-        )
-        return JsonResponse({"taught_subjects": taught_subjects}, status=HTTPStatus.OK)
+    # Subjects connected by templates this user owns
+    taught_subjects = (
+        Subject.objects
+        .filter(template__ownerId=user)   
+        .distinct()
+        .values("id", "name", "subjectCode", "year", "semester")
+    )
 
-    return JsonResponse({"taught_subjects": []}, status=HTTPStatus.OK)
+    return JsonResponse({"taught_subjects": list(taught_subjects)}, status=HTTPStatus.OK)
 
 # POST /auth/login/   body: JSON or form {username, password}
 @csrf_exempt
@@ -184,12 +189,24 @@ def csrf_token(request):
 
 # POST /logout/
 @require_POST
+@csrf_protect
+@ensure_csrf_cookie
 def user_logout(request):
     """
     Exits the user session
     """
     auth_logout(request)
-    return JsonResponse({"success": True}, status=HTTPStatus.OK)
+
+    resp = JsonResponse({"success": True}, status=HTTPStatus.OK)
+    # Remove the session cookie on the client 
+    resp.delete_cookie(
+        settings.SESSION_COOKIE_NAME,
+        path="/",
+        domain=getattr(settings, "SESSION_COOKIE_DOMAIN", None),
+        samesite=getattr(settings, "SESSION_COOKIE_SAMESITE", "Lax"),
+        secure=getattr(settings, "SESSION_COOKIE_SECURE", False),
+    )
+    return resp
 
 
 # POST /template/update/
@@ -383,14 +400,6 @@ def template_details(request):
     }, status=HTTPStatus.OK)
 
 
-# GET 
-# 
-
-
-
-# POST update status of template 
-
-
 
 # POST /template/delete/    body={"templateId": ...}
 # DELETE a template by its id, also delete its template items
@@ -496,3 +505,225 @@ def duplicate_template(request):
     except Exception as e:
         logger.exception("Unable to duplicate template")
         return JsonResponse({"error": str(e)}, status=HTTPStatus.BAD_REQUEST)
+
+
+
+# GET /info/subjects_with_templates/?username=... [&include_empty=false]
+@require_GET
+def subjects_with_templates(request):
+    """
+    Returns subjects taught by the user that have at least one template
+    owned by the same user, plus a mini summary list of those templates.
+    """
+    username = request.GET.get("username")
+    if not username:
+        return JsonResponse({"error": "username is required"}, status=HTTPStatus.BAD_REQUEST)
+
+    include_empty = (request.GET.get("include_empty") or "false").lower() in {"1", "true", "yes"}
+
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User not found"}, status=HTTPStatus.NOT_FOUND)
+
+    # Subjects taught by this user
+    taught_qs = Subject.objects.filter(coordinatorId=user).only(
+        "id", "name", "subjectCode", "year", "semester"
+    )
+
+    # All templates owned by this user on those subjects
+    templates_qs = (
+        Template.objects
+        .filter(ownerId=user, subject__in=taught_qs)
+        .select_related("subject", "ownerId")
+        .only(
+            "id", "name", "version", "isPublishable", "isTemplate",
+            "subject__id", "subject__subjectCode", "subject__year", "subject__semester",
+            "ownerId__first_name", "ownerId__last_name"
+        )
+        .order_by("-subject__year", "-subject__semester", "-version", "name")
+    )
+
+    # Group templates by subjectCode 
+    by_code = {}
+    for t in templates_qs:
+        scode = t.subject.subjectCode
+        by_code.setdefault(scode, []).append({
+            "templateId": t.id,
+            "name": t.name,
+            "version": t.version,
+            "subjectCode": t.subject.subjectCode,
+            "year": t.subject.year,
+            "semester": t.subject.semester,
+            "isPublishable": bool(t.isPublishable),
+            "isTemplate": bool(t.isTemplate),
+            "ownerName": f"{t.ownerId.first_name} {t.ownerId.last_name}".strip(),
+        })
+
+    payload = []
+    for s in taught_qs:
+        templates = by_code.get(s.subjectCode, [])
+        if not include_empty and not templates:
+            continue
+        payload.append({
+            "subject": {
+                "id": s.id,
+                "name": s.name,
+                "subjectCode": s.subjectCode,
+                "year": s.year,
+                "semester": s.semester,
+            },
+            "templates": templates,
+            "templatesCount": len(templates),
+        })
+
+    return JsonResponse({"subjects": payload}, status=HTTPStatus.OK)
+
+
+# GET /template/for_subject/?username=...&subjectCode=...  
+# GET all of user's templates for one subject
+@require_GET
+def templates_for_subject(request):
+    username = request.GET.get("username")
+    subject_code = request.GET.get("subjectCode")
+
+    user = User.objects.get(username=username)
+
+    try:
+        # Optional: restrict to subjects they teach
+        subject = Subject.objects.get(subjectCode=subject_code, coordinatorId=user)
+    except Subject.DoesNotExist:
+        # If you prefer to allow templates even when they don't coordinate, remove coordinatorId=user above
+        return JsonResponse({"error": "Subject not found or not coordinated by user"}, status=HTTPStatus.NOT_FOUND)
+
+    tqs = (
+        Template.objects
+        .filter(ownerId=user, subject=subject)
+        .select_related("subject", "ownerId")
+        .only(
+            "id", "name", "version", "isPublishable", "isTemplate",
+            "subject__subjectCode", "subject__year", "subject__semester",
+            "ownerId__first_name", "ownerId__last_name"
+        )
+        .order_by("-year", "-semester", "-version", "name")
+    )
+
+    rows = [{
+        "templateId": t.id,
+        "name": t.name,
+        "version": t.version,
+        "subjectCode": t.subject.subjectCode,
+        "year": t.subject.year,
+        "semester": t.subject.semester,
+        "isPublishable": bool(t.isPublishable),
+        "isTemplate": bool(t.isTemplate),
+        "ownerName": f"{t.ownerId.first_name} {t.ownerId.last_name}".strip(),
+    } for t in tqs]
+
+    return JsonResponse({
+        "subject": {
+            "id": subject.id,
+            "name": subject.name,
+            "subjectCode": subject.subjectCode,
+            "year": subject.year,
+            "semester": subject.semester,
+        },
+        "templates": rows,
+        "templatesCount": len(rows),
+    }, status=HTTPStatus.OK)
+
+@require_GET
+def community_templates(request):
+    """
+    Public list of community templates (publishable + template)
+    """
+    def _to_int(v, default=None):
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return default
+
+    q = (request.GET.get("q") or "").strip()
+    subject_code = request.GET.get("subjectCode")
+    year = _to_int(request.GET.get("year"))
+    semester = _to_int(request.GET.get("semester"))
+    owner = request.GET.get("owner")
+    order = (request.GET.get("order") or "recent").lower()
+
+    # Pagination 
+    limit = _to_int(request.GET.get("limit"), 20)
+    if limit is None or limit <= 0:
+        limit = 20
+    limit = min(limit, 100)
+
+    offset = _to_int(request.GET.get("offset"), 0)
+    if offset is None or offset < 0:
+        offset = 0
+
+    qs = (
+        Template.objects
+        .filter(isPublishable=True, isTemplate=True)
+        .select_related("subject", "ownerId")
+        .only(
+            "id", "name", "version", "isPublishable", "isTemplate",
+            "subject__subjectCode", "subject__year", "subject__semester",
+            "ownerId__username", "ownerId__first_name", "ownerId__last_name",
+            "description", "scope",
+        )
+    )
+
+    # Free-text search
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(description__icontains=q) |
+            Q(subject__subjectCode__icontains=q) |
+            Q(ownerId__username__icontains=q) |
+            Q(ownerId__first_name__icontains=q) |
+            Q(ownerId__last_name__icontains=q)
+        )
+
+    # Filters
+    if subject_code:
+        qs = qs.filter(subject__subjectCode__iexact=subject_code)
+    if year is not None:
+        qs = qs.filter(subject__year=year)
+    if semester is not None:
+        qs = qs.filter(subject__semester=semester)
+    if owner:
+        qs = qs.filter(ownerId__username__iexact=owner)
+
+    # Sort
+    if order == "name":
+        qs = qs.order_by("name", "-version")
+    elif order == "subject":
+        qs = qs.order_by("subject__subjectCode", "-subject__year", "-subject__semester", "name", "-version")
+    elif order == "oldest":
+        qs = qs.order_by("subject__year", "subject__semester", "name", "version")
+    else:  # 'recent'
+        qs = qs.order_by("-subject__year", "-subject__semester", "name", "-version")
+
+    total = qs.count()
+    page = list(qs[offset: offset + limit])
+
+    results = [{
+        "templateId": t.id,
+        "name": t.name,
+        "version": t.version,
+        "subjectCode": t.subject.subjectCode if t.subject else "",
+        "year": t.subject.year if t.subject else None,
+        "semester": t.subject.semester if t.subject else None,
+        "ownerUsername": t.ownerId.username if t.ownerId_id else "",
+        "ownerName": f"{t.ownerId.first_name} {t.ownerId.last_name}".strip() if t.ownerId_id else "",
+        "isPublishable": bool(t.isPublishable),
+        "isTemplate": bool(t.isTemplate),
+    } for t in page]
+
+    resp = JsonResponse({
+        "count": total,
+        "limit": limit,
+        "offset": offset,
+        "results": results,
+    }, status=HTTPStatus.OK)
+
+    return resp

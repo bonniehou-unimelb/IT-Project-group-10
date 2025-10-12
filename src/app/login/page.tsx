@@ -1,9 +1,16 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../authentication/auth";
 const API_BACKEND_URL = "http://localhost:8000";
+
+// Cookie reader
+function getCookie(name: string) {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(^|; )${name}=([^;]*)`));
+  return m ? decodeURIComponent(m[2]) : null;
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,6 +20,15 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const router = useRouter();
 
+  // Warm up cookie session
+  useEffect(() => {
+    fetch(`${API_BACKEND_URL}/auth/csrf/`, {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+    }).catch(() => {});
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -20,14 +36,25 @@ export default function LoginPage() {
 
     //Attempt API login call to backend server with login details
     try {
+      // ensure we have a CSRF cookie (fallback if mount fetch hasn't run yet)
+      await fetch(`${API_BACKEND_URL}/auth/csrf/`, {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      }).catch(() => {});
+
+      const csrf = getCookie("csrftoken");
+
       const auth_result = await fetch(`${API_BACKEND_URL}/auth/login/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(csrf ? { "X-CSRFToken": csrf } : {}),
         },
         credentials: "include",
+        cache: "no-store",
         body: JSON.stringify({
-          username: email, 
+          username: email,
           password: password,
         }),
       });

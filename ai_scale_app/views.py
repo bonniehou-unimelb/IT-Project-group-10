@@ -5,12 +5,14 @@ from django.contrib.auth import authenticate, login as auth_login
 from .models import User, Subject, Template, TemplateItem, TemplateOwnership, Enrolment, AIUseScale
 from http import HTTPStatus
 from django.contrib.auth import logout as auth_logout
+from django.conf import settings
 from django.middleware.csrf import get_token
 import json
 import logging
 from django.db import IntegrityError
 import traceback
 from django.db.models import Max
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 
 logger = logging.getLogger(__name__)    
 
@@ -186,12 +188,24 @@ def csrf_token(request):
 
 # POST /logout/
 @require_POST
+@csrf_protect
+@ensure_csrf_cookie
 def user_logout(request):
     """
     Exits the user session
     """
     auth_logout(request)
-    return JsonResponse({"success": True}, status=HTTPStatus.OK)
+
+    resp = JsonResponse({"success": True}, status=HTTPStatus.OK)
+    # Remove the session cookie on the client 
+    resp.delete_cookie(
+        settings.SESSION_COOKIE_NAME,
+        path="/",
+        domain=getattr(settings, "SESSION_COOKIE_DOMAIN", None),
+        samesite=getattr(settings, "SESSION_COOKIE_SAMESITE", "Lax"),
+        secure=getattr(settings, "SESSION_COOKIE_SECURE", False),
+    )
+    return resp
 
 
 # POST /template/update/

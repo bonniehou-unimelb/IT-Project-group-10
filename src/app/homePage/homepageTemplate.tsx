@@ -19,9 +19,9 @@ import {
   FileText, Plus, BookOpen, Users, TrendingUp, ArrowRight, Settings,
 } from 'lucide-react';
 
-type UserRole = 'COORDINATOR' | 'STUDENT' | 'ADMIN';
+type UserRole = 'COORDINATOR' | 'STUDENT' | 'ADMIN' | 'STAFF';
 
-/* Defining the attributes for each user type */
+// Defining the attributes for each user type 
 interface SubjectCoordData {
   myTemplates: number;
   activeTemplates: number;
@@ -59,6 +59,7 @@ interface Subject {
 
 type HomePageData =
   | { role: 'COORDINATOR'; data: SubjectCoordData }
+  | { role: 'STAFF'; data: SubjectCoordData }
   | { role: 'STUDENT'; data: StudentData }
   | { role: 'ADMIN'; data: SystemAdminData };
 
@@ -206,7 +207,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   }
 
   useEffect(() => {
-    if (!user?.username || role !== 'COORDINATOR') return;
+    if (!user?.username || !(role === 'COORDINATOR' || role === 'STAFF')) return;
     let cancelled = false;
 
     (async () => {
@@ -332,6 +333,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     case 'ADMIN':
       data = { role: 'ADMIN', data: mockData.systemAdmin };
       break;
+    case 'STAFF':
+      data = { role: 'COORDINATOR', data: mockData.subjectCoord };
+      break;
   }
 
   const handleAddSubject = () => {
@@ -390,7 +394,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     Welcome back 👋
                   </h1>
                   <p className="text-lg text-muted-foreground">
-                    {role === 'COORDINATOR'
+                    {(role === 'COORDINATOR' || role === 'STAFF')
                       ? 'Manage your AI guidelines and help students understand appropriate AI use.'
                       : 'View AI guidelines for your assessments.'}
                   </p>
@@ -398,7 +402,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               </div>
 
               {/*Subject COORDINATORs: Quick Actions and Community Templates */}
-              {role === 'COORDINATOR' && (
+              {(role === 'COORDINATOR' || role === 'STAFF') && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
 
                   {/* Quick actions */}
@@ -489,6 +493,105 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 </div>
               )}
 
+              {/* Admin view: Quick Actions + System Overview */}
+              {role === 'ADMIN' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                  {/* Quick actions */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Settings className="h-5 w-5 text-primary" />
+                        Admin Quick Actions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button
+                        className="w-full justify-start h-12 bg-blue-600 text-primary-foreground hover:bg-blue-700"
+                        onClick={() => router.push('/admin/users')}
+                      >
+                        <Users className="h-4 w-4 mr-3" />
+                        Manage Users
+                      </Button>
+                      <Button
+                        className="w-full justify-start h-11"
+                        variant="outline"
+                        onClick={() => router.push('/admin/subjects')}
+                      >
+                        <BookOpen className="h-4 w-4 mr-3" />
+                        Manage Subjects
+                      </Button>
+                      <Button
+                        className="w-full justify-start h-11"
+                        variant="outline"
+                        onClick={() => router.push('/allTemplates')}
+                      >
+                        <FileText className="h-4 w-4 mr-3" />
+                        Browse All Templates
+                      </Button>
+                      <Button
+                        className="w-full justify-start h-11"
+                        variant="outline"
+                        onClick={() => router.push('/admin/settings')}
+                      >
+                        <Settings className="h-4 w-4 mr-3" />
+                        Platform Settings
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* System Overview */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        System Overview
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="p-4 rounded-lg border bg-muted/30">
+                          <p className="text-xs text-muted-foreground mb-1">Total Users</p>
+                          <p className="text-2xl font-semibold">—</p>
+                        </div>
+                        <div className="p-4 rounded-lg border bg-muted/30">
+                          <p className="text-xs text-muted-foreground mb-1">Subjects</p>
+                          <p className="text-2xl font-semibold">—</p>
+                        </div>
+                        <div className="p-4 rounded-lg border bg-muted/30">
+                          <p className="text-xs text-muted-foreground mb-1">Templates</p>
+                          <p className="text-2xl font-semibold">{mockData.systemAdmin.myTemplates}</p>
+                        </div>
+                        <div className="p-4 rounded-lg border bg-muted/30">
+                          <p className="text-xs text-muted-foreground mb-1">Active Coordinators</p>
+                          <p className="text-2xl font-semibold">—</p>
+                        </div>
+                      </div>
+
+                      {/* Recent activity (placeholder list) */}
+                      <div className="mt-6">
+                        <h4 className="text-sm font-medium mb-3">Recent Activity</h4>
+                        <div className="space-y-2">
+                          {[
+                            { kind: 'User added', detail: 'coordinator alice.han', when: '2h ago' },
+                            { kind: 'Template published', detail: 'COMP30026 A1 v3', when: '1d ago' },
+                            { kind: 'Subject created', detail: 'COMP20008', when: '3d ago' },
+                          ].map((row, i) => (
+                            <div key={i} className="flex items-center justify-between p-3 border rounded-lg bg-background">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{row.kind}</p>
+                                <p className="text-xs text-muted-foreground">{row.detail}</p>
+                              </div>
+                              <Badge variant="secondary" className="text-xs">{row.when}</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+
               {/*Students: AI Guidelines grouped by subject*/}
               {role === 'STUDENT' && (
                 <Card className="mb-8">
@@ -570,7 +673,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                       <BookOpen className="h-5 w-5 text-primary" />
-                      {role === 'COORDINATOR' ? 'My Subjects' : 'Enrolled Subjects'}
+                      {(role === 'COORDINATOR' || role === 'STAFF') ? 'My Subjects' : 'Enrolled Subjects'}
                     </CardTitle>
 
                     {/*View all subjects */}
@@ -586,19 +689,19 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                           <div className="flex items-center justify-between">
                             <div>
                               <DialogTitle>
-                                {role === 'COORDINATOR'
+                                {(role === 'COORDINATOR' || role === 'STAFF')
                                   ? 'All My Subjects'
                                   : 'All Enrolled Subjects'}
                               </DialogTitle>
                               <DialogDescription>
-                                {role === 'COORDINATOR'
+                                {(role === 'COORDINATOR' || role === 'STAFF')
                                   ? 'View and manage all subjects you are currently teaching.'
                                   : 'View all subjects you are currently enrolled in.'}
                               </DialogDescription>
                             </div>
 
                             {/* Add subject as subject COORDINATOR*/}
-                            {role === 'COORDINATOR' && (
+                            {(role === 'COORDINATOR' || role === 'STAFF') && (
                               <Dialog
                                 open={isAddSubjectDialogOpen}
                                 onOpenChange={setIsAddSubjectDialogOpen}
@@ -672,7 +775,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                         {/* Scrollable subject List */}
                         <ScrollArea className="h-[60vh] pr-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {role === 'COORDINATOR' ? (
+                            {(role === 'COORDINATOR' || role === 'STAFF') ? (
                               coordLoading ? (
                                 <div className="p-3 text-sm text-muted-foreground">Loading subjects…</div>
                               ) : coordError ? (
@@ -764,7 +867,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 {/*Subject grid */}
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {role === 'COORDINATOR' ? (
+                    {(role === 'COORDINATOR' || role === 'STAFF') ? (
                       coordLoading ? (
                         <div className="p-3 text-sm text-muted-foreground">Loading subjects…</div>
                       ) : coordError ? (
@@ -867,7 +970,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                             <p className="font-medium">{selectedSubject.code}</p>
                           </div>
 
-                          {role === 'COORDINATOR' && (
+                          {(role === 'COORDINATOR' || role === 'STAFF') && (
                             <div>
                               <p className="text-sm text-muted-foreground">Templates</p>
                               <p className="font-medium">{selectedSubject.templates ?? 0}</p>
@@ -956,7 +1059,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                                   <div className="text-center py-8 text-muted-foreground">
                                     <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
                                     <p>No AI guidelines templates assigned to this subject yet.</p>
-                                    {role === 'COORDINATOR' && (
+                                    {(role === 'COORDINATOR' || role === 'STAFF') && (
                                       <Button className="mt-3" variant="outline" size="sm">
                                         <Plus className="h-4 w-4 mr-2" />
                                         Assign Template
@@ -970,7 +1073,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                         </CardContent>
                       </Card>
 
-                      {role === 'COORDINATOR' && (
+                      {(role === 'COORDINATOR' || role === 'STAFF') && (
                         <div className="flex gap-2">
                           <Button className="flex-1">
                             <Plus className="h-4 w-4 mr-2" />

@@ -13,6 +13,7 @@ import { useTemplateDetails, createOrUpdateTemplateAction, addTemplateItemAction
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "../authentication/auth";
 import { useRouter } from "next/navigation";
+import * as XLSX from 'xlsx';
 
 interface AIUseLevel {
   id: number | string;
@@ -59,6 +60,7 @@ export default function AIGuidelinesBuilder() {
   const [error, setError] = useState<string | null>(null);
   const [templateId, setTemplateId] = useState<number | null>(null);
   const [currentVersion, setCurrentVersion] = useState<number>(0);
+  const [exportFormat, setExportFormat] = useState<'excel' | 'pdf'>('excel');
 
   // Reroute to log in page if user session invalid
   useEffect(() => {
@@ -314,37 +316,71 @@ export default function AIGuidelinesBuilder() {
     const html = buildPrintableHTML();
 
     try {
-      const mod = await import('print-js');
-      const printJS = (mod && (mod as any).default) ? (mod as any).default : mod;
-      // print-js supports raw HTML printing via type: 'raw-html'
-      // some versions accept "printable" as string HTML for 'raw-html'
-      try {
-        (printJS as any)({
-          printable: html,
-          type: 'raw-html',
-          documentTitle: guidelinesTitle,
-        });
-        return;
-      } catch (innerErr) {
-        // fallthrough to window.open fallback below
-      }
-    } catch (err) {
-      // continue to fallback
-    }
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = html2pdfModule.default || html2pdfModule;
 
-    // open a print window using our prepared HTML
-    const w = window.open('', '_blank', 'noopener,noreferrer');
-    if (!w) return;
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    // delay to load styles
-    setTimeout(() => {
-      w.print();
-      w.close();
-    }, 250);
+      const opt = {
+        margin:       10,
+        filename:     `${guidelinesTitle || 'AI_Guidelines'}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      } as const;
+
+      // convert HTML string to DOM element
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      // download
+      await html2pdf().from(el).set(opt).save();
+    } catch (err) {
+      console.error('PDF export failed', err);
+      alert('Failed to export PDF.');
+    }
   };
 
+  const handleExportExcel = () => {
+    const data = aiUseLevels.map(level => ({
+      Task: level.task ?? '',
+      'AI Use Level': level.aiUseScaleLevel_name ?? '',
+      'Instructions to Students': level.instructions ?? '',
+      'Examples': level.examples ?? '',
+      'AI Generated Content': level.aiGeneratedContent ?? '',
+      'Acknowledgement Required': level.acknowledgement ? 'Yes' : 'No',
+    }));
+
+    // create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    worksheet['!cols'] = [
+      { wch: 30 }, // Task
+      { wch: 20 }, // AI Use Level
+      { wch: 40 }, // Instructions to Students
+      { wch: 40 }, // Examples
+      { wch: 40 }, // AI Generated Content
+      { wch: 25 }, // Acknowledgement Required
+    ];
+
+    // text wrapping
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || '');
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+        const cell = worksheet[cell_address];
+        if (cell && cell.t) {
+          if (!cell.s) cell.s = {};
+          cell.s.alignment = { wrapText: true, vertical: 'top' };
+        }
+      }
+    }
+
+    // add worksheet to workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'AI Use Levels');
+
+    // write to file and download
+    const filename = `${guidelinesTitle || 'AI_Guidelines'}.xlsx`;
+    XLSX.writeFile(workbook, filename, {cellStyles: true});
+  }
 
   return (
     <div className="flex h-[calc(100vh-120px)]">
@@ -599,12 +635,72 @@ export default function AIGuidelinesBuilder() {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {aiUseLevels.length} AI use levels defined{assessmentType && ` • ${assessmentType}`}
+              {aiUseLevels.length} AI use levels defined
+              {assessmentType && ` • ${assessmentType}`}
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleExportPDF}>Export Guidelines</Button>
-              <Button onClick={handleSaveGuidelines} disabled={isSaving}>{isSaving ? "Saving…" : "Save Guidelines"}</Button>
+
+            {/* export */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 gap-4">
+              <div className="flex items-center gap-3">
+                <Label htmlFor="export-format">Export Format:</Label>
+
+                <div className="flex items-center gap-2">
+                  {/* excel label */}
+                  <span
+                    className={`text-sm ${
+                      exportFormat === "excel"
+                        ? "font-medium text-primary"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    Excel
+                  </span>
+
+                  {/* toggle */}
+                  <div
+                    className={`relative w-12 h-6 rounded-full cursor-pointer transition-colors duration-300 ${exportFormat === "pdf" ? "bg-blue-900" : "bg-gray-300"}`}
+                    onClick={() =>
+                      setExportFormat((prev) => (prev === "excel" ? "pdf" : "excel"))
+                    }
+                  >
+                    <div
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300
+                        ${exportFormat === "pdf" ? "translate-x-6" : ""}`}
+                    />
+                  </div>
+
+                  {/* pdf label */}
+                  <span
+                    className={`text-sm ${
+                      exportFormat === "pdf"
+                        ? "font-medium text-primary"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    PDF
+                  </span>
+                </div>
+              </div>
+
+              {/* export & save buttons */}
+              <div className="flex items-center gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    exportFormat === "pdf"
+                      ? handleExportPDF()
+                      : handleExportExcel()
+                  }
+                >
+                  Export as {exportFormat === "pdf" ? "PDF" : "Excel"}
+                </Button>
+
+                <Button onClick={handleSaveGuidelines} disabled={isSaving}>
+                  {isSaving ? "Saving…" : "Save Guidelines"}
+                </Button>
+              </div>
             </div>
+
           </div>
         </CardContent>
       </Card>

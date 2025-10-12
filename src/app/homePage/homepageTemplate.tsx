@@ -258,7 +258,7 @@ return (
         {/* Main column */}
         <div className="flex-1 flex flex-col">
           {/* Top bar */}
-          < TopBar pageName="Homepage" subtitle =""/>
+          < TopBar pageName="Homepage"/>
         {/* Main Content */}
         <div className="flex-1">
           <div className="max-w-7xl mx-auto p-6">

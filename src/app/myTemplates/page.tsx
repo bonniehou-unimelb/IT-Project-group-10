@@ -156,7 +156,7 @@ export default function Dashboard() {
       <div className="flex min-h-screen">
         <SideBar />
         <div className="flex-1 flex flex-col">
-          <TopBar />
+          <TopBar pageName="My Templates"/>
           <main className={`${layout} py-5`}>
             <h2 className="font-bold text-3xl">My Templates</h2>
 
@@ -224,11 +224,7 @@ export default function Dashboard() {
                   )}
 
                   {filtered.map((tpl) => (
-                    <tr
-                      key={tpl.templateId}
-                      className="hover:bg-gray-50"
-                      onClick={() => handleRowClick(tpl.templateId)}
-                    >
+                    <tr>
                       <td className="px-4 py-3 truncate">{tpl.name}</td>
                       <td className="px-4 py-3">{tpl.subjectCode}</td>
                       <td className="px-4 py-3 text-center">{tpl.semester}</td>
@@ -247,6 +243,10 @@ export default function Dashboard() {
                             }}
                           >
                             Preview
+                          </button>
+                          <button
+                            className="px-3 py-1 rounded-lg text-red-600 border border-red-400 hover:bg-red-50">
+                            Delete
                           </button>
                           {}
                         </div>

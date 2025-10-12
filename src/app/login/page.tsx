@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../authentication/auth";
 const API_BACKEND_URL = "http://localhost:8000";
 
 export default function LoginPage() {

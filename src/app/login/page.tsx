@@ -69,8 +69,7 @@ export default function LoginPage() {
       } else {
         console.log("Log in successful");
         //Redirect logged in user to their dashboard
-        // TO DO: redirect according to their user role
-        router.push("/myTemplates");
+        router.push("/homePage");
       }
     } catch (err){
       console.log("Server error");

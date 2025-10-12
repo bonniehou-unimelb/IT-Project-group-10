@@ -13,6 +13,7 @@ from django.db import IntegrityError
 import traceback
 from django.db.models import Max
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)    
 
@@ -630,3 +631,99 @@ def templates_for_subject(request):
         "templates": rows,
         "templatesCount": len(rows),
     }, status=HTTPStatus.OK)
+
+@require_GET
+def community_templates(request):
+    """
+    Public list of community templates (publishable + template)
+    """
+    def _to_int(v, default=None):
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return default
+
+    q = (request.GET.get("q") or "").strip()
+    subject_code = request.GET.get("subjectCode")
+    year = _to_int(request.GET.get("year"))
+    semester = _to_int(request.GET.get("semester"))
+    owner = request.GET.get("owner")
+    order = (request.GET.get("order") or "recent").lower()
+
+    # Pagination 
+    limit = _to_int(request.GET.get("limit"), 20)
+    if limit is None or limit <= 0:
+        limit = 20
+    limit = min(limit, 100)
+
+    offset = _to_int(request.GET.get("offset"), 0)
+    if offset is None or offset < 0:
+        offset = 0
+
+    qs = (
+        Template.objects
+        .filter(isPublishable=True, isTemplate=True)
+        .select_related("subject", "ownerId")
+        .only(
+            "id", "name", "version", "isPublishable", "isTemplate",
+            "subject__subjectCode", "subject__year", "subject__semester",
+            "ownerId__username", "ownerId__first_name", "ownerId__last_name",
+            "description", "scope",
+        )
+    )
+
+    # Free-text search
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(description__icontains=q) |
+            Q(subject__subjectCode__icontains=q) |
+            Q(ownerId__username__icontains=q) |
+            Q(ownerId__first_name__icontains=q) |
+            Q(ownerId__last_name__icontains=q)
+        )
+
+    # Filters
+    if subject_code:
+        qs = qs.filter(subject__subjectCode__iexact=subject_code)
+    if year is not None:
+        qs = qs.filter(subject__year=year)
+    if semester is not None:
+        qs = qs.filter(subject__semester=semester)
+    if owner:
+        qs = qs.filter(ownerId__username__iexact=owner)
+
+    # Sort
+    if order == "name":
+        qs = qs.order_by("name", "-version")
+    elif order == "subject":
+        qs = qs.order_by("subject__subjectCode", "-subject__year", "-subject__semester", "name", "-version")
+    elif order == "oldest":
+        qs = qs.order_by("subject__year", "subject__semester", "name", "version")
+    else:  # 'recent'
+        qs = qs.order_by("-subject__year", "-subject__semester", "name", "-version")
+
+    total = qs.count()
+    page = list(qs[offset: offset + limit])
+
+    results = [{
+        "templateId": t.id,
+        "name": t.name,
+        "version": t.version,
+        "subjectCode": t.subject.subjectCode if t.subject else "",
+        "year": t.subject.year if t.subject else None,
+        "semester": t.subject.semester if t.subject else None,
+        "ownerUsername": t.ownerId.username if t.ownerId_id else "",
+        "ownerName": f"{t.ownerId.first_name} {t.ownerId.last_name}".strip() if t.ownerId_id else "",
+        "isPublishable": bool(t.isPublishable),
+        "isTemplate": bool(t.isTemplate),
+    } for t in page]
+
+    resp = JsonResponse({
+        "count": total,
+        "limit": limit,
+        "offset": offset,
+        "results": results,
+    }, status=HTTPStatus.OK)
+
+    return resp

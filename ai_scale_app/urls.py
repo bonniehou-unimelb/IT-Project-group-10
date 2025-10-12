@@ -18,6 +18,7 @@ urlpatterns = [
     path("logout/", views.user_logout, name="logout"),
     path("token/", views.csrf_token, name="csrf_token"),
     path("info/subjects_with_templates/", views.subjects_with_templates, name="subjects_templates"),
-    path("template/for_subject/", views.templates_for_subject, name="template_for_subject")
+    path("template/for_subject/", views.templates_for_subject, name="template_for_subject"),
+    path("templates/community/", views.community_templates, name="community_templates")
 
 ]

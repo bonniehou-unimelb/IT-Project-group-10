@@ -4,11 +4,11 @@
 python -m venv .venv
 source .venv/bin/activate    
 ```
-for Windows, run this instead
-```
-python -m venv .venv
-source .venv/Scripts/activate
-```
+  for Windows, run this instead
+  ```
+  python -m venv .venv
+  source .venv/Scripts/activate
+  ```
 2. Install packages 
 ```bash
 pip install -r requirements.txt

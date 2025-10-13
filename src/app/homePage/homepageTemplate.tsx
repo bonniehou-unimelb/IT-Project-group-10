@@ -432,7 +432,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                       <Button
                         className="w-full justify-start h-11"
                         variant="outline"
-                        onClick={() => router.push('/allTemplates')}
+                        onClick={() => router.push('/communityTemplates')}
                       >
                         <BookOpen className="h-4 w-4 mr-3" />
                         Browse All Templates
@@ -455,7 +455,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => router.push('/allTemplates')}
+                          onClick={() => router.push('/communityTemplates')}
                         >
                           View All
                           <ArrowRight className="h-4 w-4 ml-2" />

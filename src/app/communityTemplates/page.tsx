@@ -213,15 +213,10 @@ export default function Dashboard() {
         {/* Main column */}
         <div className="flex-1 flex flex-col">
           {}
-          <TopBar pageName="All Templates"/>
+          <TopBar pageName="Community Templates"/>
 
           {/* Content */}
           <main className={`${layout} py-5`}>
-
-            {/* Title */}
-            <h2 className="font-bold text-3xl">
-              Community Templates
-            </h2>
             
             {/* Search */}
             <div className="pt-3">
@@ -271,9 +266,6 @@ export default function Dashboard() {
 
                   {filtered.map((tpl) => (
                     <tr
-                      key={tpl.templateId}
-                      className="hover:bg-gray-50"
-                      onClick={() => handleRowClick(tpl.templateId)}
                     >
                       <td className="px-4 py-3 truncate">{tpl.name}</td>
                       <td className="px-4 py-3">{tpl.subjectCode}</td>
@@ -292,7 +284,7 @@ export default function Dashboard() {
                               router.push(`/?template_id=${tpl.templateId}`); 
                             }}
                           >
-                            Preview
+                            Edit
                           </button>
                           {/* Duplicate button for every row */}
                           <button

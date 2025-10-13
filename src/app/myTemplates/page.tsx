@@ -254,7 +254,7 @@ export default function Dashboard() {
                               router.push(`/?template_id=${tpl.templateId}`);
                             }}
                           >
-                            Preview
+                            Edit
                           </button>
                           <button
                             className="px-3 py-1 rounded-lg text-red-600 border border-red-400 hover:bg-red-50">

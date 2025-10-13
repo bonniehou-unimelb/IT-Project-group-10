@@ -28,9 +28,9 @@ function SideBar() {
                 </button>
                 <button 
                     className="w-full text-left px-6 py-3 hover:bg-blue-950"
-                    onClick={() => router.push("/allTemplates")}
+                    onClick={() => router.push("/communityTemplates")}
                 >
-                    All Templates
+                    Community Templates
                 </button>
                 </nav>
         </aside>

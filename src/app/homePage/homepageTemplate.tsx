@@ -416,7 +416,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     <CardContent className="space-y-3">
                       <Button
                         className="w-full justify-start h-12 bg-blue-600 text-primary-foreground hover:bg-blue-700"
-                        onClick={() => router.push('/templates/new')}
+                        onClick={() => router.push('/templatebuilder')}
                       >
                         <Plus className="h-4 w-4 mr-3" />
                         Create New AI Guidelines

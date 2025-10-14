@@ -1,3 +1,5 @@
+// Page that displays the personal templates of the user
+
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -51,7 +53,7 @@ export default function Dashboard() {
   const [query, setQuery] = useState<string>("");
   const [booted, setBooted] = useState(false);
 
-  //Single refresh to wait for cookie session 
+  // Single refresh to wait for cookie session 
   useEffect(() => {
     (async () => {
       try { await refresh?.(); } finally { setBooted(true); }
@@ -68,24 +70,23 @@ export default function Dashboard() {
     return () => clearTimeout(t);
   }, [booted, pageLoading, user, router]);
   
+  useEffect(() => {
+    if (user?.username) setUsername(user.username);
+  }, [user]);
   
-    useEffect(() => {
-      if (user?.username) setUsername(user.username);
-    }, [user]);
   
+  const handleRowClick = (template_id: number) => {
+    router.push(`/?template_id=${template_id}`);
+  };
   
-    const handleRowClick = (template_id: number) => {
-      router.push(`/?template_id=${template_id}`);
-    };
+  // Fetch cookie for user session
+  useEffect(() => {
+    if (!user) return;
+    fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" })
+      .catch(() => {;});
+  }, [user]);
   
-    // Fetch cookie for user session
-    useEffect(() => {
-      if (!user) return;
-      fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" })
-        .catch(() => {;});
-    }, [user]);
-  
-    // Fetch summary details of the templates the current user owns
+  // Fetch summary details of the templates the current user owns
   useEffect(() => {
     if (!booted || pageLoading || !user?.username) return;
     (async () => {
@@ -106,54 +107,56 @@ export default function Dashboard() {
     })();
   }, [booted, pageLoading, user]);
     
-    // Handles creating new AI use scale from scratch
-    const createNewScale = async () => {
-      setIsCreating(true);
-      setError("");
+  // Handles creating new AI use scale from scratch
+  const createNewScale = async () => {
+    setIsCreating(true);
+    setError("");
   
-      try {
-        const csrftoken = await ensureCsrf();
-        const now = new Date();
-        const payload = {
-          username: user?.username ?? "",
-          name: "New AI Use Scale",
-          subjectCode: "DRAFT",
-          year: 2025,
-          semester: 1,
-          scope: "",
-          description: "",
-          version: 0,          
-          isPublishable: false,  // start as non-publishable 
-          isTemplate: false,  // start as non-template
-        };
+    try {
+      const csrftoken = await ensureCsrf();
+      const now = new Date();
+      const payload = {
+        username: user?.username ?? "",
+        name: "New AI Use Scale",
+        subjectCode: "DRAFT",
+        year: 2025,
+        semester: 1,
+        scope: "",
+        description: "",
+        version: 0,
+        // A table is publishable if it can be duplicated by other users of the system          
+        isPublishable: false,  // Start as non-publishable 
+        // A template is a table that is initially created by the system admin
+        isTemplate: false,  // Start as non-template
+      };
   
-        const res = await fetch(`${API_BACKEND_URL}/template/update/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(csrftoken ? { "X-CSRFToken": csrftoken, "X-Requested-With": "XMLHttpRequest" } : {}),
-          },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        });
+      const res = await fetch(`${API_BACKEND_URL}/template/update/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrftoken ? { "X-CSRFToken": csrftoken, "X-Requested-With": "XMLHttpRequest" } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
   
-        // Fetch template ID only from backend 
-        const text = await res.text();
-        let body: any = {};
-        try { body = JSON.parse(text); } catch {}
+      // Fetch template ID only from backend 
+      const text = await res.text();
+      let body: any = {};
+      try { body = JSON.parse(text); } catch {}
   
-        if (!res.ok || !body?.templateId) {
-          throw new Error(body?.error || text || "Failed to create template");
-        }
-  
-        //Route to default template creation with specified template ID
-        router.push(`/?template_id=${body.templateId}`);
-      } catch (e:any) {
-        setError(String(e?.message ?? e) || "Failed to create template");
-      } finally {
-        setIsCreating(false);
+      if (!res.ok || !body?.templateId) {
+        throw new Error(body?.error || text || "Failed to create template");
       }
-    };
+  
+      // Route to default template creation with specified template ID
+      router.push(`/?template_id=${body.templateId}`);
+    } catch (e:any) {
+      setError(String(e?.message ?? e) || "Failed to create template");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const filtered = query.trim()
     ? templateSum.filter((t) =>
@@ -165,14 +168,19 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="flex min-h-screen">
+      
+      <div className="flex min-h-screen"> 
+        {/* Render the side bar */}
         <SideBar />
-        <div className="flex-1 flex flex-col">
-          <TopBar pageName="My Templates"/>
-          <main className={`${layout} py-5`}>
-            <h2 className="font-bold text-3xl">My Templates</h2>
 
+        <div className="flex-1 flex flex-col">
+          {/* Render the top bar */}
+          <TopBar pageName="My Templates"/>
+
+          <main className={`${layout} py-5`}>
             <div className="pt-6">
+              
+              {/* Button that creates a new blank template using the base in the system */}
               <button
                 type="button"
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
@@ -189,7 +197,7 @@ export default function Dashboard() {
 
             <p className="pt-7 text-xl">Or edit an existing template:</p>
 
-            {}
+            {/* Search Bar */}
             <div className="pt-3">
               <SearchBar
                 value={query}
@@ -198,18 +206,20 @@ export default function Dashboard() {
               />
             </div>
 
+            {/* While loading up the table, display interim loading text */}
             {loading && (
               <div className="mt-4 p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-900">
                 Loading…
               </div>
             )}
+            {/* If we run into an error when displaying the table, display an error message */}
             {error && (
               <div className="mt-4 p-3 rounded-md bg-red-50 border border-red-200 text-red-900">
                 {error}
               </div>
             )}
 
-            {}
+            {/* Table of all the user's templates that they have created */}
             <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white">
               <table className="max-w table-auto text-sm">
                 <thead className="bg-gray-50">
@@ -227,14 +237,18 @@ export default function Dashboard() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-100">
+                  {/* The table contents are filtered by what is in the search bar if it is being used */}
                   {filtered.length === 0 && !loading && (
                     <tr>
+                      {/* If the search query doesn't have a corresponding entry in the table,
+                          we display a "not found" message */}
                       <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
                         No {query ? "matching" : ""} templates{query ? " for your search." : " yet."}
                       </td>
                     </tr>
                   )}
 
+                  {/* The contents of the table */}
                   {filtered.map((tpl) => (
                     <tr>
                       <td className="px-4 py-3 truncate">{tpl.name}</td>
@@ -247,6 +261,7 @@ export default function Dashboard() {
                       <td className="px-4 py-3">{tpl.isPublishable ? "Yes" : "No"}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
+                          {/* Edit the given template in the table */}
                           <button
                             className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
                             onClick={(e) => {
@@ -256,11 +271,12 @@ export default function Dashboard() {
                           >
                             Edit
                           </button>
+
+                          {/* Delete the given template from the system */}
                           <button
                             className="px-3 py-1 rounded-lg text-red-600 border border-red-400 hover:bg-red-50">
                             Delete
                           </button>
-                          {}
                         </div>
                       </td>
                     </tr>

@@ -1,3 +1,6 @@
+// The top bar of the web page
+// It displays the username of the current user as well as the current page they are on
+
 "use client"
 
 import { useEffect, useState } from "react";
@@ -71,9 +74,6 @@ function TopBar({ pageName = "Dashboard"}: TopBarProps) {
         .catch(() => {;});
     }, [user]);
 
-    
-
-
     useEffect(() => {
         if (!username) return;
         (async () => {
@@ -94,7 +94,7 @@ function TopBar({ pageName = "Dashboard"}: TopBarProps) {
         })();
       }, [username]);
 
-    //log out cookie sessino
+    // Log out cookie session
     const handleLogout = async () => {
       try { await logout(); } finally { router.replace("/login"); }
     };
@@ -102,19 +102,23 @@ function TopBar({ pageName = "Dashboard"}: TopBarProps) {
     return (
         <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-200">
             <div className={`${layout} py-3 flex items-center justify-between`}>
+                
+                {/* Display name of page here */}
                 <div className="leading-tight">
                     <p className="text-xs sm:text-sm text-gray-500">{pageName}</p>
                 </div>
+                
+                {/* Log out button */}
                 <Menu
                     menuButton={<MenuButton className="px-3 py-2 rounded-md border">{username} ▿</MenuButton>}
                     transition
                 >
-                    {/* TODO: Fix so it erases previous user information */}
                     <MenuItem
                         onClick={handleLogout}>
                         Log Out
                     </MenuItem>
               </Menu>
+
             </div>
         </header>
     );

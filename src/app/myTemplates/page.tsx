@@ -19,8 +19,8 @@ export type TemplateSummary = {
   year: number;
   semester: number;
   ownerName: string;
-  isPublishable: boolean;
-  isTemplate: boolean;
+  isPublishable: boolean; // A table is publishable if it can be duplicated by other users of the system  
+  isTemplate: boolean;    // A template is a table that is initially created by the system admin
 };
 
 // CSRF Cookie management
@@ -123,10 +123,8 @@ export default function Dashboard() {
         semester: 1,
         scope: "",
         description: "",
-        version: 0,
-        // A table is publishable if it can be duplicated by other users of the system          
+        version: 0,        
         isPublishable: false,  // Start as non-publishable 
-        // A template is a table that is initially created by the system admin
         isTemplate: false,  // Start as non-template
       };
   
@@ -261,6 +259,7 @@ export default function Dashboard() {
                       <td className="px-4 py-3">{tpl.isPublishable ? "Yes" : "No"}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
+                          
                           {/* Edit the given template in the table */}
                           <button
                             className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"

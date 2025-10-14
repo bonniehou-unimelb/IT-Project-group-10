@@ -18,8 +18,8 @@ export type TemplateSummary = {
   semester: number;
   ownerName: string;
   ownerUsername?: string;
-  isPublishable: boolean;
-  isTemplate: boolean;
+  isPublishable: boolean; // A table is publishable if it can be duplicated by other users of the system  
+  isTemplate: boolean;    // A template is a table that is initially created by the system admin
 };
 
 // CSRF Cookie management
@@ -50,10 +50,10 @@ export default function Dashboard() {
   const [error, setError] = useState<string>("");
   const [isCreating, setIsCreating] = useState(false);
 
-  // search (kept) — now triggers server-side query
+  // Search (kept) — now triggers server-side query
   const [query, setQuery] = useState("");
 
-  // paging (added)
+  // Paging (added)
   const [offset, setOffset] = useState(0);
   const [limit] = useState(25);
   const [total, setTotal] = useState<number | null>(null);
@@ -61,7 +61,7 @@ export default function Dashboard() {
 
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
 
-  // cancel stale requests
+  // Cancel stale requests
   const inFlight = useRef<AbortController | null>(null);
 
   // Reroute to log in page if user session invalid
@@ -86,9 +86,9 @@ export default function Dashboard() {
       .catch(() => {;});
   }, [user]);
 
-  // ---- NEW: fetch from community endpoint (server-side search + paging) ----
+  // Fetch from community endpoint (server-side search + paging)
   const fetchCommunity = async (opts: { reset?: boolean } = {}) => {
-    // abort previous
+    // Abort previous
     inFlight.current?.abort();
     const ac = new AbortController();
     inFlight.current = ac;
@@ -138,13 +138,13 @@ export default function Dashboard() {
     }
   };
 
-  // initial load
+  // Initial load
   useEffect(() => {
     fetchCommunity({ reset: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // re-query immediately on search change (no debounce)
+  // Re-query immediately on search change (no debounce)
   useEffect(() => {
     setTemplateSum([]);
     setOffset(0);
@@ -207,18 +207,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      
       <div className="flex min-h-screen">
-        {/* Sidebar */}
+        {/* Render the side bar */}
         <SideBar />
-        {/* Main column */}
+
         <div className="flex-1 flex flex-col">
-          {}
+          {/* Render the top bar */}
           <TopBar pageName="Community Templates"/>
 
-          {/* Content */}
           <main className={`${layout} py-5`}>
             
-            {/* Search */}
+            {/* Search Bar */}
             <div className="pt-3">
               <SearchBar
                 value={query}
@@ -227,18 +227,20 @@ export default function Dashboard() {
               />
             </div>
 
+            {/* While loading up the table, display interim loading text */}
             {loading && filtered.length === 0 && (
               <div className="mt-4 p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-900">
                 Loading…
               </div>
             )}
+            {/* If we run into an error when displaying the table, display an error message */}
             {error && (
               <div className="mt-4 p-3 rounded-md bg-red-50 border border-red-200 text-red-900">
                 {error}
               </div>
             )}
 
-            {/* Table */}
+            {/* Table of all the templates that are in the system */}
             <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white">
               <table className="max-w table-auto text-sm">
                 <thead className="bg-gray-50">
@@ -256,14 +258,18 @@ export default function Dashboard() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-100">
+                  {/* The table contents are filtered by what is in the search bar if it is being used */}
                   {filtered.length === 0 && !loading && (
                     <tr>
+                      {/* If the search query doesn't have a corresponding entry in the table,
+                          we display a "not found" message */}
                       <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
                         No {query ? "matching" : ""} templates{query ? " for your search." : " yet."}
                       </td>
                     </tr>
                   )}
 
+                  {/* The contents of the table */}
                   {filtered.map((tpl) => (
                     <tr
                     >
@@ -277,6 +283,8 @@ export default function Dashboard() {
                       <td className="px-4 py-3">{tpl.isPublishable ? "Yes" : "No"}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
+                          
+                          {/* Edit the given template in the table */}
                           <button
                             className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
                             onClick={(e) => {
@@ -286,11 +294,13 @@ export default function Dashboard() {
                           >
                             Edit
                           </button>
-                          {/* Duplicate button for every row */}
+                          
+                          {/* Duplicate the given template in the table */}
                           <button
                             className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50"
                             onClick={async (e) => {
                               e.stopPropagation(); 
+                              {/* Attempt duplication */}
                               try {
                                 const res = await fetch(`${API_BACKEND_URL}/template/duplicate/`, {
                                   method: "POST",
@@ -303,6 +313,7 @@ export default function Dashboard() {
                                 const data = await res.json();
                                 setTemplateSum((prev) => [data.new_template, ...prev]);
                               } catch (err) {
+                                {/* If we run into an error in the duplication process, warn the user */}
                                 console.error(err);
                                 alert("Failed to duplicate template");
                               }
@@ -318,7 +329,7 @@ export default function Dashboard() {
               </table>
             </div>
 
-            {/* Paging controls */}
+            {/* Paging controls so if we have excess amount of tables, we can move between displays if needed */}
             <div className="mt-4 flex items-center justify-between">
               <div className="text-sm text-gray-600">
                 {total !== null
@@ -338,8 +349,8 @@ export default function Dashboard() {
               )}
             </div>
 
+            {/* Option to create a new personal AI use scale from the community page */}
             <p className="pl-1 pt-6 text-xl"> Or create your own!</p>
-
             <div className="pt-2">
               <button
                 type="button"

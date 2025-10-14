@@ -297,11 +297,15 @@ export default function Dashboard() {
                                   credentials: "include",
                                   cache: "no-store",
                                   headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ templateId: tpl.templateId }),
+                                  body: JSON.stringify({ templateId: tpl.templateId, username:username }),
                                 });
                                 if (!res.ok) throw new Error("Failed to duplicate template");
-                                const data = await res.json();
-                                setTemplateSum((prev) => [data.new_template, ...prev]);
+                                  const data = await res.json();
+                                  if (data?.new_template?.isPublishable && data?.new_template?.isTemplate) {
+                                    setTemplateSum((prev) => [data.new_template, ...prev]);
+                                  } else {
+                                    ; //non publishable or non template
+                                  }
                               } catch (err) {
                                 console.error(err);
                                 alert("Failed to duplicate template");

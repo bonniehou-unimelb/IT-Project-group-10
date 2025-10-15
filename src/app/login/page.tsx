@@ -18,11 +18,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { refresh } = useAuth();
+  
+  
   const router = useRouter();
 
   // Warm up cookie session
   useEffect(() => {
-    fetch(`${API_BACKEND_URL}/auth/csrf/`, {
+    fetch(`${API_BACKEND_URL}/token/`, {
       method: "GET",
       credentials: "include",
       cache: "no-store",
@@ -37,7 +40,7 @@ export default function LoginPage() {
     //Attempt API login call to backend server with login details
     try {
       // ensure we have a CSRF cookie (fallback if mount fetch hasn't run yet)
-      await fetch(`${API_BACKEND_URL}/auth/csrf/`, {
+      await fetch(`${API_BACKEND_URL}/token/`, {
         method: "GET",
         credentials: "include",
         cache: "no-store",
@@ -68,6 +71,7 @@ export default function LoginPage() {
         return ;
       } else {
         console.log("Log in successful");
+        await refresh();
         //Redirect logged in user to their dashboard
         router.push("/homePage");
       }

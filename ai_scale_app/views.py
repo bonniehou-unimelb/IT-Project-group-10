@@ -201,10 +201,9 @@ def user_logout(request):
     # Remove the session cookie on the client 
     resp.delete_cookie(
         settings.SESSION_COOKIE_NAME,
-        path="/",
+        path=getattr(settings, "SESSION_COOKIE_PATH", "/"),
         domain=getattr(settings, "SESSION_COOKIE_DOMAIN", None),
-        samesite=getattr(settings, "SESSION_COOKIE_SAMESITE", "Lax"),
-        secure=getattr(settings, "SESSION_COOKIE_SECURE", False),
+        samesite=getattr(settings, "SESSION_COOKIE_SAMESITE", None),
     )
     return resp
 

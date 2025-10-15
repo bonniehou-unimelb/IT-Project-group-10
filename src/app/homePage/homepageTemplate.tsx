@@ -153,10 +153,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
   // Reroute to log in page if user session invalid
   useEffect(() => {
-    if (!pageLoading && !user) router.replace("/login");
+    if (pageLoading) return;     // wait for provider to finish bootstrapping
+    if (!user) router.replace("/login");
   }, [pageLoading, user, router]);
 
-  useEffect(() => { refresh(); }, []); 
 
   useEffect(() => {
     if (user?.username) setUsername(user.username);

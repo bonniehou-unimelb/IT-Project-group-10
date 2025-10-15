@@ -52,6 +52,8 @@ export default function Dashboard() {
   const layout = "mx-auto w-full max-w-[1280px] px-6 md:px-8";
   const [query, setQuery] = useState<string>("");
   const [booted, setBooted] = useState(false);
+  const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
+
 
   // Single refresh to wait for cookie session 
   useEffect(() => {
@@ -164,6 +166,41 @@ export default function Dashboard() {
       )
     : templateSum;
 
+  const handleDelete = async (templateId: number) => {
+    if (!confirm("Delete this template? This cannot be undone.")) return;
+    try {
+      setDeletingIds((s) => new Set(s).add(templateId));
+      const csrftoken = await ensureCsrf();
+      const res = await fetch(`${API_BACKEND_URL}/template/delete/`, {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrftoken ? { "X-CSRFToken": csrftoken, "X-Requested-With": "XMLHttpRequest" } : {}),
+        },
+        body: JSON.stringify({ templateId }),
+      });
+      const txt = await res.text();
+      if (!res.ok) {
+        let msg = "Failed to delete template";
+        try { msg = JSON.parse(txt)?.error || msg; } catch {}
+        throw new Error(msg);
+      }
+      // remove from list
+      setTemplateSum((prev) => prev.filter((t) => t.templateId !== templateId));
+    } catch (e:any) {
+      alert(e?.message || "Delete failed");
+    } finally {
+      setDeletingIds((s) => {
+        const n = new Set(s);
+        n.delete(templateId);
+        return n;
+      });
+    }
+  };
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       
@@ -273,8 +310,14 @@ export default function Dashboard() {
 
                           {/* Delete the given template from the system */}
                           <button
-                            className="px-3 py-1 rounded-lg text-red-600 border border-red-400 hover:bg-red-50">
-                            Delete
+                            className="px-3 py-1 rounded-lg text-red-600 border border-red-400 hover:bg-red-50 disabled:opacity-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(tpl.templateId);
+                            }}
+                            disabled={deletingIds.has(tpl.templateId)}
+                          >
+                            {deletingIds.has(tpl.templateId) ? "Deleting…" : "Delete"}
                           </button>
                         </div>
                       </td>

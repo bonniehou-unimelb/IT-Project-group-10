@@ -35,22 +35,32 @@ async function ensureCsrf(): Promise<string | null> {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
+  
 
   const refresh = async () => {
     try {
       const res = await fetch(`${API_BACKEND_URL}/session/`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user ?? null);
+
+        // Accept either {user: {...}} or {...} or null
+        const u = (data && typeof data === "object")
+          ? (("user" in data) ? (data as any).user : data)
+          : null;
+
+        // Basic sanity: must be object with username
+        const userObj = (u && typeof u === "object" && "username" in u) ? u as any : null;
+        setUser(userObj);
       } else {
         setUser(null);
       }
     } catch {
       setUser(null);
     } finally {
-      setPageLoading(false);
+      setPageLoading(false);  // ok for bootstrap; see optional tweak in §4
     }
   };
+
 
   const logout = async () => {
     const csrftoken = await ensureCsrf();

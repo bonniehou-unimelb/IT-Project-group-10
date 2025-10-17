@@ -468,24 +468,6 @@ export default function AIGuidelinesBuilder() {
                 </span>
               </div>
             </div>
-
-            <div className="flex items-end">
-          <div>
-            <Label htmlFor="is-template">Template?</Label>
-            <div className="mt-2 flex items-center gap-2">
-              <input
-                id="is-template"
-                type="checkbox"
-                checked={isTemplate}
-                onChange={(e) => setIsTemplate(e.target.checked)}
-                className="h-4 w-4"
-              />
-              <span className="text-sm text-muted-foreground">
-                {isTemplate ? 'Yes' : 'No'}
-              </span>
-            </div>
-          </div>
-        </div>
         </div>
 
 

@@ -282,17 +282,6 @@ export default function Dashboard() {
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
                           
-                          {/* Edit the given template in the table */}
-                          <button
-                            className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
-                            onClick={(e) => {
-                              e.stopPropagation(); 
-                              router.push(`/?template_id=${tpl.templateId}`); 
-                            }}
-                          >
-                            Edit
-                          </button>
-                          
                           {/* Duplicate the given template in the table */}
                           <button
                             className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50"

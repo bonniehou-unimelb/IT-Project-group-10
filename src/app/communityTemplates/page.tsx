@@ -251,7 +251,6 @@ export default function Dashboard() {
                     <th className="px-4 py-3 font-medium w-24 text-center">Year</th>
                     <th className="px-4 py-3 font-medium w-24 text-center">Version</th>
                     <th className="px-4 py-3 font-medium w-40">Creator Name</th>
-                    <th className="px-4 py-3 font-medium w-28">Type</th>
                     <th className="px-4 py-3 font-medium w-28">Publishable?</th>
                     <th className="px-4 py-3 font-medium w-44">Actions</th>
                   </tr>
@@ -279,7 +278,6 @@ export default function Dashboard() {
                       <td className="px-4 py-3 text-center">{tpl.year}</td>
                       <td className="px-4 py-3 text-center">v{tpl.version}</td>
                       <td className="px-4 py-3">{tpl.ownerName || "NA"}</td>
-                      <td className="px-4 py-3">{tpl.isTemplate ? "Template" : "Instance"}</td>
                       <td className="px-4 py-3">{tpl.isPublishable ? "Yes" : "No"}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">

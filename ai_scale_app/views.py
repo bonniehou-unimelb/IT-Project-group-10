@@ -227,7 +227,7 @@ def create_or_update_template(request):
     scope = data.get("scope") or ""
     description = data.get("description") or ""
     is_publishable = data.get("isPublishable", False)
-    is_template = data.get("isTemplate", False)
+    is_template = data.get("isTemplate", True)
 
 
     # Grab subject object based on code, year, semester
@@ -258,7 +258,7 @@ def create_or_update_template(request):
                 description=description,
                 version=next_version,
                 isPublishable=is_publishable,
-                isTemplate=is_template,
+                isTemplate=True,
             )
         TemplateOwnership.objects.create(ownerId=user, templateId=t)
         return JsonResponse(
@@ -341,7 +341,7 @@ def summary_templates(request):
             "semester": t.subject.semester,
             "ownerName": get_full_owner_name(t),
             "isPublishable": bool(t.isPublishable),
-            "isTemplate": bool(t.isTemplate),
+            "isTemplate": True,
         })
 
     return JsonResponse({"templates": response_rows}, status=HTTPStatus.OK)
@@ -394,7 +394,7 @@ def template_details(request):
         "scope": t.scope,
         "description": t.description,
         "isPublishable": t.isPublishable,
-        "isTemplate": t.isTemplate,
+        "isTemplate": True,
         "template_items": template_items,
     }, status=HTTPStatus.OK)
 
@@ -460,7 +460,7 @@ def duplicate_template(request):
                 subject=original.subject,         # copy FK as-is
                 version=original.version,
                 isPublishable=False,
-                isTemplate=False,
+                isTemplate=True,
             )
 
             # If your join model uses fields named `template`/`owner`, change them here:
@@ -493,7 +493,7 @@ def duplicate_template(request):
                 "ownerName": ownerName or user.username,
                 "ownerUsername": user.username,
                 "isPublishable": bool(new_template.isPublishable),
-                "isTemplate": bool(new_template.isTemplate),
+                "isTemplate": True,
             }
         }, status=HTTPStatus.CREATED)
 
@@ -551,7 +551,7 @@ def subjects_with_templates(request):
             "year": t.subject.year,
             "semester": t.subject.semester,
             "isPublishable": bool(t.isPublishable),
-            "isTemplate": bool(t.isTemplate),
+            "isTemplate": True,
             "ownerName": f"{t.ownerId.first_name} {t.ownerId.last_name}".strip(),
         })
 
@@ -611,7 +611,7 @@ def templates_for_subject(request):
         "year": t.subject.year,
         "semester": t.subject.semester,
         "isPublishable": bool(t.isPublishable),
-        "isTemplate": bool(t.isTemplate),
+        "isTemplate": True,
         "ownerName": f"{t.ownerId.first_name} {t.ownerId.last_name}".strip(),
     } for t in tqs]
 
@@ -711,7 +711,7 @@ def community_templates(request):
         "ownerUsername": t.ownerId.username if t.ownerId_id else "",
         "ownerName": f"{t.ownerId.first_name} {t.ownerId.last_name}".strip() if t.ownerId_id else "",
         "isPublishable": bool(t.isPublishable),
-        "isTemplate": bool(t.isTemplate),
+        "isTemplate": True,
     } for t in page]
 
     resp = JsonResponse({

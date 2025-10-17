@@ -6,6 +6,16 @@ import { TopBar } from '../components/topbar';
 import { SearchBar } from '../components/searchbar';
 import { CreateTemplateButton } from "../components/createTemplateButton";
 import { useAuth } from "../authentication/auth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/alert-dialog';
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -63,6 +73,18 @@ export default function Dashboard() {
 
   // Cancel stale requests
   const inFlight = useRef<AbortController | null>(null);
+
+  // When providing feedback for duplication, show the required screen
+  const [showDuplicationDialog, setShowDuplicationDialog] = useState(false);
+
+  const handleDuplicationClick = () => {
+    setShowDuplicationDialog(true);
+  };
+
+  const navigateToMyTemplates = () => {
+    setShowDuplicationDialog(false);
+    router.replace("/myTemplates");
+  }
 
   // Reroute to log in page if user session invalid
   useEffect(() => {
@@ -282,17 +304,6 @@ export default function Dashboard() {
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
                           
-                          {/* Edit the given template in the table */}
-                          <button
-                            className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
-                            onClick={(e) => {
-                              e.stopPropagation(); 
-                              router.push(`/?template_id=${tpl.templateId}`); 
-                            }}
-                          >
-                            Edit
-                          </button>
-                          
                           {/* Duplicate the given template in the table */}
                           <button
                             className="px-3 py-1 rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50"
@@ -308,12 +319,14 @@ export default function Dashboard() {
                                   body: JSON.stringify({ templateId: tpl.templateId, username:username }),
                                 });
                                 if (!res.ok) throw new Error("Failed to duplicate template");
-                                  const data = await res.json();
-                                  if (data?.new_template?.isPublishable && data?.new_template?.isTemplate) {
-                                    setTemplateSum((prev) => [data.new_template, ...prev]);
-                                  } else {
-                                    ; //non publishable or non template
-                                  }
+                                const data = await res.json();
+                                if (data?.new_template?.isPublishable && data?.new_template?.isTemplate) {
+                                  setTemplateSum((prev) => [data.new_template, ...prev]);
+                                } else {
+                                  ; // Non publishable
+                                }
+                                // Display a pop-up so we know we've duplicated the template
+                                setShowDuplicationDialog(true);
                               } catch (err) {
                                 {/* If we run into an error in the duplication process, warn the user */}
                                 console.error(err);
@@ -330,6 +343,30 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
+
+            {/* Alert Dialog so we know we've duplicated a template */}
+            <AlertDialog open={showDuplicationDialog} onOpenChange={setShowDuplicationDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Duplication Successful</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Your duplicated template has been saved to your Personal Templates
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <button
+                    className="bg-blue-700 p-2 rounded-lg text-white hover:bg-blue-800"
+                    onClick={navigateToMyTemplates}>
+                    Take me there!
+                  </button>
+                  <button
+                    className="px-4 border border-gray-300 rounded-lg hover:bg-gray-100"
+                    onClick={() => {setShowDuplicationDialog(false)}}>
+                    Ok
+                  </button>
+                </AlertDialogFooter>
+              </AlertDialogContent>           
+            </AlertDialog>
 
             {/* Paging controls so if we have excess amount of tables, we can move between displays if needed */}
             <div className="mt-4 flex items-center justify-between">

@@ -93,7 +93,6 @@ interface CommunityTemplate {
   popularity: number;
 }
 
-
 /* Template summary */
 interface SubjectTemplateLite {
   templateId: number;
@@ -163,28 +162,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [error, setError] = useState<string>("");
   const [role, setRole] = useState<string>("");
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setCommunityError("");
-        setCommunityLoading(true);
-        // If BE is on :8000, use the constant you already defined:
-        const res = await fetch(`${API_BACKEND_URL}/api/community/templates/?limit=4`);
-        // If you proxy BE under the same origin, use: fetch(`/api/community/templates/?limit=4`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (!cancelled) setCommunity(json.templates ?? []);
-      } catch (e: any) {
-        if (!cancelled) setCommunityError(e.message || "Failed to load community templates");
-      } finally {
-        if (!cancelled) setCommunityLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-
   // Reroute to log in page if user session invalid
   useEffect(() => {
     if (pageLoading) return;     // wait for provider to finish bootstrapping
@@ -204,10 +181,33 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       .catch(() => {;});
   }, [user]);
 
+  // Load Community Templates (publishable)
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    try {
+      setCommunityError("");
+      setCommunityLoading(true);
+      // ✅ Your Django URLconf lists this path: templates/community/
+      const res = await fetch(`${API_BACKEND_URL}/templates/community/?limit=4`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!cancelled) setCommunity(json.templates ?? []);
+    } catch (e: any) {
+      if (!cancelled) setCommunityError(e.message || "Failed to load community templates");
+    } finally {
+      if (!cancelled) setCommunityLoading(false);
+    }
+  })();
+  return () => { cancelled = true; };
+}, []);
+
+
   //API integration for displaying subjects and template summary for Coordinators
   const [coordinatorSubjects, setCoordinatorSubjects] = useState<SubjectWithTemplates[] | null>(null);
   const [coordLoading, setCoordLoading] = useState(false);
   const [coordError, setCoordError] = useState<string>("");
+
   // Community templates state
   const [community, setCommunity] = useState<CommunityTemplate[] | null>(null);
   const [communityLoading, setCommunityLoading] = useState(false);
@@ -441,7 +441,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               </div>
 
               {/*Subject COORDINATORs: Quick Actions and Community Templates */}
-              {(role === 'COORDINATOR' || role === 'STAFF') && (
+              {(role === 'COORDINATOR' || role === 'STAFF' || role === 'ADMIN') && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
 
                   {/* Quick actions */}
@@ -513,6 +513,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                         {!communityLoading && !communityError && (community?.length ?? 0) === 0 && (
                           <div className="p-3 text-sm text-muted-foreground">No publishable templates found.</div>
                         )}
+
                         {!communityLoading && !communityError && community?.map((tpl) => (
                           <div
                             key={tpl.templateId}
@@ -526,14 +527,17 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="secondary" className="text-xs">{tpl.tag}</Badge>
-                                <span className="text-xs text-muted-foreground">
-                                  {tpl.popularity} downloads
-                                </span>
+                                {typeof tpl.popularity === "number" && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {tpl.popularity} downloads
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
                         ))}
                       </div>
+
                     </CardContent>
                   </Card>
                 </div>

@@ -14,6 +14,9 @@ import traceback
 from django.db.models import Max
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django.db.models import Q
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from .models import Template
 
 logger = logging.getLogger(__name__)    
 
@@ -722,3 +725,49 @@ def community_templates(request):
     }, status=HTTPStatus.OK)
 
     return resp
+
+@require_GET
+def community_templates(request):
+    """
+    Returns publishable templates for the homepage 'Community Templates' widget.
+    Optional query param: ?limit=4 (default 4)
+    """
+    # 1) Read ?limit= query param safely
+    limit_str = request.GET.get("limit", "4")
+    try:
+        limit = max(1, int(limit_str))
+    except ValueError:
+        limit = 4
+
+    # 2) Query publishable templates (newest first)
+    # NOTE: If you track "updated_at", use .order_by("-updated_at") instead.
+    qs = (
+        Template.objects
+        .filter(isPublishable=True)
+        .select_related("ownerId", "subject")
+        .order_by("-id")[:limit]
+    )
+
+    # 3) Serialize the items the widget needs
+    rows = []
+    for t in qs:
+        author = "Unknown"
+        if getattr(t, "ownerId", None):
+            first = getattr(t.ownerId, "first_name", "") or ""
+            last  = getattr(t.ownerId, "last_name", "") or ""
+            author = (f"{first} {last}").strip() or t.ownerId.username
+
+        subject_code = getattr(getattr(t, "subject", None), "subjectCode", None)
+        rows.append({
+            "templateId": t.id,
+            "title": t.name,
+            "author": author,
+            "subjectCode": subject_code,
+            "tag": t.scope or "General",
+            "isTemplate": bool(getattr(t, "isTemplate", False)),
+            "isPublishable": bool(getattr(t, "isPublishable", False)),
+            # If you add a real popularity metric later, put it here:
+            "popularity": 0,
+        })
+
+    return JsonResponse({"templates": rows})

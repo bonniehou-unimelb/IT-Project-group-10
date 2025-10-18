@@ -1,6 +1,7 @@
 # ai_scale_app/urls.py
 from django.urls import path
 from . import views
+from .views import community_templates
 
 urlpatterns = [
     path("", views.index, name="index"),
@@ -20,5 +21,6 @@ urlpatterns = [
     path("info/subjects_with_templates/", views.subjects_with_templates, name="subjects_templates"),
     path("template/for_subject/", views.templates_for_subject, name="template_for_subject"),
     path("templates/community/", views.community_templates, name="community_templates"),
-    path("auth/csrf/", views.csrf_token, name="csrf_token")
+    path("auth/csrf/", views.csrf_token, name="csrf_token"),
+    path("api/community/templates/", community_templates, name="community-templates")
 ]

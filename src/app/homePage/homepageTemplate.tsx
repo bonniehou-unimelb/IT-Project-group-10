@@ -82,6 +82,17 @@ interface BackendTemplateSummary {
   isTemplate: boolean;
 }
 
+interface CommunityTemplate {
+  templateId: number;
+  title: string;
+  author: string;
+  subjectCode?: string | null;
+  tag: string;
+  isTemplate: boolean;
+  isPublishable: boolean;
+  popularity: number;
+}
+
 /* Template summary */
 interface SubjectTemplateLite {
   templateId: number;
@@ -170,10 +181,38 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       .catch(() => {;});
   }, [user]);
 
+  // Load Community Templates (publishable)
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    try {
+      setCommunityError("");
+      setCommunityLoading(true);
+      // ✅ Your Django URLconf lists this path: templates/community/
+      const res = await fetch(`${API_BACKEND_URL}/templates/community/?limit=4`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!cancelled) setCommunity(json.templates ?? []);
+    } catch (e: any) {
+      if (!cancelled) setCommunityError(e.message || "Failed to load community templates");
+    } finally {
+      if (!cancelled) setCommunityLoading(false);
+    }
+  })();
+  return () => { cancelled = true; };
+}, []);
+
+
   //API integration for displaying subjects and template summary for Coordinators
   const [coordinatorSubjects, setCoordinatorSubjects] = useState<SubjectWithTemplates[] | null>(null);
   const [coordLoading, setCoordLoading] = useState(false);
   const [coordError, setCoordError] = useState<string>("");
+
+  // Community templates state
+  const [community, setCommunity] = useState<CommunityTemplate[] | null>(null);
+  const [communityLoading, setCommunityLoading] = useState(false);
+  const [communityError, setCommunityError] = useState<string>("");
+
 
   async function fetchTaughtSubjects(u: string): Promise<CoordinatorSubject[]> {
     const res = await fetch(`${API_BACKEND_URL}/info/taught_subjects/?username=${encodeURIComponent(u)}`, {
@@ -402,7 +441,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               </div>
 
               {/*Subject COORDINATORs: Quick Actions and Community Templates */}
-              {(role === 'COORDINATOR' || role === 'STAFF') && (
+              {(role === 'COORDINATOR' || role === 'STAFF' || role === 'ADMIN') && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
 
                   {/* Quick actions */}
@@ -465,29 +504,40 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     <CardContent className="space-y-4">
                       {/* Mock community templates */}
                       <div className="space-y-3">
-                        {[
-                          { title: 'Research Paper Template', author: 'Dr. Johnson', tag: 'Science' },
-                          { title: 'STEM Lab Template', author: 'Mr. Smith', tag: 'Science' },
-                          { title: 'Creative Writing Template', author: 'Dr. Han', tag: 'Arts' },
-                          { title: 'Programming Assignment Template', author: 'Prof. Wang', tag: 'IT' },
-                        ].map((tpl: { title: string; author: string; tag: string}, idx: number) => (
+                        {communityLoading && (
+                          <div className="p-3 text-sm text-muted-foreground">Loading community templates…</div>
+                        )}
+                        {communityError && (
+                          <div className="p-3 text-sm text-red-600">Error: {communityError}</div>
+                        )}
+                        {!communityLoading && !communityError && (community?.length ?? 0) === 0 && (
+                          <div className="p-3 text-sm text-muted-foreground">No publishable templates found.</div>
+                        )}
+
+                        {!communityLoading && !communityError && community?.map((tpl) => (
                           <div
-                            key={idx}
+                            key={tpl.templateId}
                             className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                            onClick={() => router.push(`/templates/${tpl.templateId}`)}
                           >
                             <div className="flex-1">
                               <h4 className="text-sm font-medium">{tpl.title}</h4>
-                              <p className="text-xs text-muted-foreground">{tpl.author}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {tpl.author}{tpl.subjectCode ? ` • ${tpl.subjectCode}` : ""}
+                              </p>
                               <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary" className="text-xs">
-                                  {tpl.tag}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">100 downloads</span>
+                                <Badge variant="secondary" className="text-xs">{tpl.tag}</Badge>
+                                {typeof tpl.popularity === "number" && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {tpl.popularity} downloads
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
                         ))}
                       </div>
+
                     </CardContent>
                   </Card>
                 </div>

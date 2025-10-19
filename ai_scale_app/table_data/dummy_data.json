@@ -1,3 +1,4 @@
+
 [
   {
     "model": "ai_scale_app.user",
@@ -51,6 +52,18 @@
       "username": "emilyjones@student.unimelb.edu.au",
       "first_name": "Emily",
       "last_name": "Jones",
+      "password": "12345678"
+    }
+  },
+
+  {
+    "model": "ai_scale_app.user",
+    "pk": 6,
+    "fields": {
+      "role": "ADMIN",
+      "username": "faithli@unimelb.edu.au",
+      "first_name": "Faith",
+      "last_name": "Li",
       "password": "12345678"
     }
   },
@@ -425,3 +438,5 @@
   }
 }
 ]
+
+

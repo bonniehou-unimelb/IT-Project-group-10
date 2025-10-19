@@ -108,57 +108,146 @@ export default function Dashboard() {
       .catch(() => {;});
   }, [user]);
 
-  // Fetch from community endpoint (server-side search + paging)
-  const fetchCommunity = async (opts: { reset?: boolean } = {}) => {
-    // Abort previous
-    inFlight.current?.abort();
-    const ac = new AbortController();
-    inFlight.current = ac;
+ // Fetch from community endpoint (server-side search + paging)
+const fetchCommunity = async (opts: { reset?: boolean } = {}) => {
+  // Abort previous
+  inFlight.current?.abort();
+  const ac = new AbortController();
+  inFlight.current = ac;
 
-    try {
-      setLoading(true);
-      setError("");
+  try {
+    setLoading(true);
+    setError("");
 
-      const nextOffset = opts.reset ? 0 : offset;
-      const url = new URL(`${API_BACKEND_URL}/templates/community/`);
-      url.searchParams.set("limit", String(limit));
-      url.searchParams.set("offset", String(nextOffset));
-      url.searchParams.set("order", "recent");
-      if (query.trim()) url.searchParams.set("q", query.trim());
+    const nextOffset = opts.reset ? 0 : offset;
+    const url = new URL(`${API_BACKEND_URL}/templates/community/`);
+    url.searchParams.set("limit", String(limit));
+    url.searchParams.set("offset", String(nextOffset));
+    url.searchParams.set("order", "recent");
+    if (query.trim()) url.searchParams.set("q", query.trim());
 
-      const res = await fetch(url.toString(), {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-        signal: ac.signal,
-      });
-      if (!res.ok) throw new Error(`Failed to load templates (${res.status})`);
-      const body = await res.json();
+    const res = await fetch(url.toString(), {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+      signal: ac.signal,
+    });
+    if (!res.ok) throw new Error(`Failed to load templates (${res.status})`);
 
-      const rows: TemplateSummary[] = (body?.results || []).map((r: any) => ({
-        templateId: r.templateId,
-        name: r.name,
-        version: r.version,
-        subjectCode: r.subjectCode,
-        year: r.year,
-        semester: r.semester,
-        ownerName: r.ownerName,
-        ownerUsername: r.ownerUsername,
-        isPublishable: !!r.isPublishable,
-        isTemplate: !!r.isTemplate,
-      }));
+    const bodyText = await res.text();
+    let body: any = {};
+    try { body = JSON.parse(bodyText); } catch { body = {}; }
 
-      setTotal(typeof body?.count === "number" ? body.count : null);
-      setTemplateSum((prev) => (opts.reset ? rows : [...prev, ...rows]));
-      setOffset(nextOffset + rows.length);
-    } catch (e: any) {
-      if (e?.name !== "AbortError") {
-        setError(e?.message || "Failed to load community templates");
-      }
-    } finally {
-      if (!ac.signal.aborted) setLoading(false);
+    // accept multiple payload shapes:
+    //  - { results: [...] , count }
+    //  - { templates: [...] }
+    //  - { data: [...] , total | total_items }
+    //  - [ ... ] (array at root)
+    const rawList: any[] =
+      (Array.isArray(body) && body) ||
+      body.results ||
+      body.templates ||
+      body.data ||
+      [];
+
+    const nextTotal: number | null =
+      typeof body.count === "number" ? body.count :
+      typeof body.total === "number" ? body.total :
+      typeof body.total_items === "number" ? body.total_items :
+      (Array.isArray(body) ? body.length : null);
+
+    // map unknown fields into your TemplateSummary shape
+    const rows: TemplateSummary[] = rawList.map((r: any): TemplateSummary => {
+      const templateId =
+        r.templateId ?? r.id ?? r.template_id ?? r.pk ?? Math.random();
+
+      const name =
+        r.name ?? r.title ?? "Untitled";
+
+      const subjectCode =
+        r.subjectCode ??
+        r.subject_code ??
+        r.subject?.subjectCode ??
+        r.subject?.code ??
+        "—";
+
+      const ownerFull =
+        r?.owner?.fullName ?? r?.owner?.name ?? undefined;
+
+      const ownerFromId =
+        r?.ownerId
+          ? `${r.ownerId.first_name ?? ""} ${r.ownerId.last_name ?? ""}`.trim() || undefined
+          : undefined;
+
+      const ownerName = (
+        r?.ownerName ??
+        r?.author ??
+        ownerFull ??
+        ownerFromId ??
+        r?.ownerId?.username ??
+        "Unknown"
+      );
+
+
+      const ownerUsername =
+        r.ownerUsername ??
+        r.owner_username ??
+        r.owner?.username ??
+        r.ownerId?.username;
+
+      const version =
+        typeof r.version === "number" ? r.version :
+        typeof r.templateVersion === "number" ? r.templateVersion :
+        1;
+
+      const year =
+        typeof r.year === "number" ? r.year :
+        typeof r.templateYear === "number" ? r.templateYear :
+        new Date().getFullYear();
+
+      const semester =
+        typeof r.semester === "number" ? r.semester :
+        typeof r.term === "number" ? r.term :
+        1;
+
+      const isPublishable =
+        typeof r.isPublishable === "boolean" ? r.isPublishable :
+        typeof r.is_publishable === "boolean" ? r.is_publishable :
+        !!r.isPublishable;
+
+      const isTemplate =
+        typeof r.isTemplate === "boolean" ? r.isTemplate :
+        typeof r.is_template === "boolean" ? r.is_template :
+        !!r.isTemplate;
+
+      return {
+        templateId: Number(templateId),
+        name,
+        version,
+        subjectCode,
+        year,
+        semester,
+        ownerName,
+        ownerUsername,
+        isPublishable,
+        isTemplate,
+      };
+    });
+    // ⬆️ CHANGED
+    // -----------------------------
+
+    setTotal(nextTotal);
+    setTemplateSum((prev) => (opts.reset ? rows : [...prev, ...rows]));
+    setOffset(nextOffset + rows.length);
+  } catch (e: any) {
+    if (e?.name !== "AbortError") {
+      setError(e?.message || "Failed to load community templates");
     }
-  };
+  } finally {
+    if (!ac.signal.aborted) setLoading(false);
+  }
+};
+
 
   // Initial load
   useEffect(() => {

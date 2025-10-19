@@ -22,5 +22,8 @@ urlpatterns = [
     path("template/for_subject/", views.templates_for_subject, name="template_for_subject"),
     path("templates/community/", views.community_templates, name="community_templates"),
     path("auth/csrf/", views.csrf_token, name="csrf_token"),
+    path("system-overview/", views.system_overview, name="system-overview"),
+    path("system-overview/", views.system_overview, name="system-overview"),
+    path("recent-activity/", views.recent_activity, name="recent-activity"),
     path("api/community/templates/", community_templates, name="community-templates")
 ]

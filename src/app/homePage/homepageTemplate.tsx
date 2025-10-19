@@ -594,7 +594,7 @@ useEffect(() => {
 
                   {/* System Overview */}
                   <SystemOverview />
-                  <RecentActivity />
+                  /<RecentActivity />
                 </div>
               )}
 

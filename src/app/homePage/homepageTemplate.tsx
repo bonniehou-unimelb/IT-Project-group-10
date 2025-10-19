@@ -12,6 +12,9 @@ import { useRouter } from 'next/navigation';
 import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
 import { useAuth } from "../authentication/auth";
+import SystemOverview from "../components/SystemOverview"
+import RecentActivity from "../components/RecentActivity"
+
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -590,54 +593,8 @@ useEffect(() => {
                   </Card>
 
                   {/* System Overview */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-primary" />
-                        System Overview
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="p-4 rounded-lg border bg-muted/30">
-                          <p className="text-xs text-muted-foreground mb-1">Total Users</p>
-                          <p className="text-2xl font-semibold">—</p>
-                        </div>
-                        <div className="p-4 rounded-lg border bg-muted/30">
-                          <p className="text-xs text-muted-foreground mb-1">Subjects</p>
-                          <p className="text-2xl font-semibold">—</p>
-                        </div>
-                        <div className="p-4 rounded-lg border bg-muted/30">
-                          <p className="text-xs text-muted-foreground mb-1">Templates</p>
-                          <p className="text-2xl font-semibold">{mockData.systemAdmin.myTemplates}</p>
-                        </div>
-                        <div className="p-4 rounded-lg border bg-muted/30">
-                          <p className="text-xs text-muted-foreground mb-1">Active Coordinators</p>
-                          <p className="text-2xl font-semibold">—</p>
-                        </div>
-                      </div>
-
-                      {/* Recent activity (placeholder list) */}
-                      <div className="mt-6">
-                        <h4 className="text-sm font-medium mb-3">Recent Activity</h4>
-                        <div className="space-y-2">
-                          {[
-                            { kind: 'User added', detail: 'coordinator alice.han', when: '2h ago' },
-                            { kind: 'Template published', detail: 'COMP30026 A1 v3', when: '1d ago' },
-                            { kind: 'Subject created', detail: 'COMP20008', when: '3d ago' },
-                          ].map((row, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 border rounded-lg bg-background">
-                              <div className="flex-1">
-                                <p className="text-sm font-medium">{row.kind}</p>
-                                <p className="text-xs text-muted-foreground">{row.detail}</p>
-                              </div>
-                              <Badge variant="secondary" className="text-xs">{row.when}</Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <SystemOverview />
+                  /<RecentActivity />
                 </div>
               )}
 

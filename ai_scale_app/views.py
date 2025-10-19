@@ -17,6 +17,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from .models import Template
+from django.utils.timezone import now
 
 logger = logging.getLogger(__name__)    
 
@@ -771,3 +772,35 @@ def community_templates(request):
         })
 
     return JsonResponse({"templates": rows})
+
+def system_overview(request):
+    """
+    Returns overall statistics for dashboard display.
+    """
+
+    total_users = User.objects.count()
+    total_subjects = Subject.objects.count()
+    total_templates = Template.objects.count()
+    active_coordinators = User.objects.filter(role=User.Role.COORDINATOR, is_active=True).count()
+
+    data = {
+        "totalUsers": total_users,
+        "subjects": total_subjects,
+        "templates": total_templates,
+        "activeCoordinators": active_coordinators,
+    }
+
+    return JsonResponse(data)
+
+
+def recent_activity(request):
+    recent_users = list(User.objects.order_by('-date_joined')[:5].values('username', 'date_joined'))
+    recent_subjects = list(Subject.objects.order_by('-id')[:5].values('name', 'subjectCode', 'year', 'semester'))
+    recent_templates = list(Template.objects.order_by('-id')[:5].values('name', 'version'))
+
+    return JsonResponse({
+        "recentUsers": recent_users,
+        "recentSubjects": recent_subjects,
+        "recentTemplates": recent_templates,
+        "timestamp": now().isoformat()
+    })

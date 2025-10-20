@@ -110,7 +110,7 @@ export default function Dashboard() {
   }, [booted, pageLoading, user]);
     
   // Handles creating new AI use scale from scratch
-  const createNewScale = async () => {
+  /* const createNewScale = async () => {
     setIsCreating(true);
     setError("");
   
@@ -156,7 +156,7 @@ export default function Dashboard() {
     } finally {
       setIsCreating(false);
     }
-  };
+  }; */
 
   const filtered = query.trim()
     ? templateSum.filter((t) =>
@@ -220,9 +220,8 @@ export default function Dashboard() {
                 type="button"
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
                 onClick={() => {
-                  if (!user || isCreating) return;
-                  createNewScale();
-                  router.push("/templates/new");
+                  if (!user) return;
+                  router.push("/templatebuilder");
                 }}
                 disabled={!user || isCreating}
               >

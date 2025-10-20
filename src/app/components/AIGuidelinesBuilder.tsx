@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { forwardRef, useImperativeHandle, useState, useEffect } from "react";
 import { Button } from './button';
 import { Input } from './input';
 import { Textarea } from './textarea';
@@ -33,7 +33,7 @@ interface TemplateScale {
   levels: Omit<AIUseLevel, 'id'>[];
 }
 
-export default function AIGuidelinesBuilder() {
+const AIGuidelinesBuilder = forwardRef((props, ref) => {
   //pass in the template_id of the template we want to display from dashboard page
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -115,7 +115,9 @@ export default function AIGuidelinesBuilder() {
 
 
   useEffect(() => {
-    open(templateID);
+    if (templateID && !isNaN(templateID)) {
+      open(templateID);
+    }
   }, [open, templateID]);
 
   // Fetch API once
@@ -213,6 +215,8 @@ export default function AIGuidelinesBuilder() {
             setTemplateId(templateId);
             setCurrentVersion(version);
             setVersion(version);
+
+            window.localStorage.setItem("currentTemplateId", String(templateId));
 
             // Add all template items (updated or not) to the template just created
             // Call addTemplateItemAction to add the item for every row in the guidelines form
@@ -381,6 +385,10 @@ export default function AIGuidelinesBuilder() {
     const filename = `${guidelinesTitle || 'AI_Guidelines'}.xlsx`;
     XLSX.writeFile(workbook, filename, {cellStyles: true});
   }
+
+  useImperativeHandle(ref, () => ({
+    save: handleSaveGuidelines,  // expose save function to parent
+  }));
 
   return (
     <div className="flex h-[calc(100vh-120px)]">
@@ -690,4 +698,8 @@ export default function AIGuidelinesBuilder() {
       </div>
     </div>
   );
-}
+
+});
+
+export default AIGuidelinesBuilder;
+ 

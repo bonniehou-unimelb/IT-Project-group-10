@@ -466,15 +466,6 @@ const fetchCommunity = async (opts: { reset?: boolean } = {}) => {
                   ? `Showing ${templateSum.length}…`
                   : ""}
               </div>
-              {hasMore && (
-                <button
-                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
-                  onClick={() => fetchCommunity()}
-                  disabled={loading}
-                >
-                  {loading ? "Loading…" : "Load more"}
-                </button>
-              )}
             </div>
 
             {/* Option to create a new personal AI use scale from the community page */}

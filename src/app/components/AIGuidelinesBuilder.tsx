@@ -13,6 +13,7 @@ import { useTemplateDetails, createOrUpdateTemplateAction, addTemplateItemAction
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "../authentication/auth";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import * as XLSX from 'xlsx';
 
 interface AIUseLevel {
@@ -43,6 +44,7 @@ export default function AIGuidelinesBuilder() {
   })();
   const [username, setUsername] = useState<string>("");
   const { user, pageLoading, refresh } = useAuth();
+  const pathname = usePathname();
 
   //Store temporarily the current fields of the form
   const [guidelinesTitle, setGuidelinesTitle] = useState('AI Use Guidelines for Assessment');
@@ -72,6 +74,19 @@ export default function AIGuidelinesBuilder() {
   useEffect(() => {
     if (user?.username) setUsername(user.username);
   }, [user]);
+
+  // Reroute to new template once new version saved
+  useEffect(() => {
+    if (!templateId) return;
+    // build new url with the updated template id
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set("template_id", String(templateId));
+
+    const nextUrl = `${pathname}?${params.toString()}`;
+    window.location.assign(nextUrl);
+    console.log("[reroute] ->", nextUrl);
+    router.replace(nextUrl);
+  }, [templateId]);
 
   
   const [aiUseLevels, setAIUseLevels] = useState<AIUseLevel[]>([
@@ -197,7 +212,7 @@ export default function AIGuidelinesBuilder() {
       // Build a form object for input into createOrUpdateTemplateAction
       const form = {
         name: guidelinesTitle,
-        subjectCode: subjectCode,
+        subjectCode: String(subjectCode || "").trim().toUpperCase(),
         year: Number(year),
         semester: Number(semester),
         scope: assessmentType,
@@ -208,16 +223,16 @@ export default function AIGuidelinesBuilder() {
       };
 
       await new Promise<void>((resolve, reject) => {
-        const onSuccess = async ({ templateId, version }: { templateId: number; version: number }) => {
+        const onSuccess = async ({ templateId: newId, version }: { templateId: number; version: number }) => {
           try {
-            setTemplateId(templateId);
+            setTemplateId(newId);
             setCurrentVersion(version);
             setVersion(version);
 
             // Add all template items (updated or not) to the template just created
             // Call addTemplateItemAction to add the item for every row in the guidelines form
             const addItemOnce = (level: AIUseLevel) => {
-              const addItem = addTemplateItemAction(templateId!);
+              const addItem = addTemplateItemAction(newId);
               return addItem({
                 task: level.task ?? 'NA',
                 aiUseScaleLevel_name: level.aiUseScaleLevel_name ?? 'NA',
@@ -230,7 +245,14 @@ export default function AIGuidelinesBuilder() {
             await Promise.all(aiUseLevels.map(addItemOnce));
 
             setIsFetched(false);
-            open(templateId)
+            open(newId)
+
+            // update the URL to the new template id 
+            const params = new URLSearchParams(Array.from(searchParams.entries()));
+            params.set("template_id", String(newId));
+            console.log(`${pathname}?${params.toString()}`);
+            router.replace(`${pathname}?${params.toString()}`);
+
             console.log("Template items created.")
             resolve();
           } catch (err) {

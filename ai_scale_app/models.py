@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 # The below classes generates the schemas for our relational database 
 class User(AbstractUser):
@@ -131,3 +132,26 @@ class AcknowledgementFormItem(models.Model):
 
     def __str__(self):
         return f"AckFormItem {self.id} in {self.ackFormId}"
+    
+class AuditLog(models.Model):
+    ACTION_CHOICES = [
+        ("CREATE", "Create"),
+        ("UPDATE", "Update"),
+        ("DELETE", "Delete"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_logs",
+    )
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    model_name = models.CharField(max_length=100)
+    object_id = models.PositiveIntegerField()
+    details = models.JSONField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} {self.action} {self.model_name}({self.object_id})"

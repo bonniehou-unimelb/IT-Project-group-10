@@ -22,6 +22,22 @@ from django.utils.timezone import now
 
 logger = logging.getLogger(__name__)    
 
+@require_GET
+def health_check(request):
+    """
+    Simple endpoint to check if backend is running.
+    Returns status, timestamp, and optional environment info.
+    """
+    import os
+    from django.utils.timezone import now
+
+    data = {
+        "status": "ok",
+        "timestamp": now().isoformat(),
+        "environment": os.environ.get("DJANGO_SETTINGS_MODULE", "unknown"),
+    }
+    return JsonResponse(data, status=HTTPStatus.OK)
+
 # ---- HELPER FUNCTIONS ---- #
 def resolve_ai_use_level(use_scale_name):
     """

@@ -30,6 +30,22 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 logger = logging.getLogger(__name__)    
 
+@require_GET
+def health_check(request):
+    """
+    Simple endpoint to check if backend is running.
+    Returns status, timestamp, and optional environment info.
+    """
+    import os
+    from django.utils.timezone import now
+
+    data = {
+        "status": "ok",
+        "timestamp": now().isoformat(),
+        "environment": os.environ.get("DJANGO_SETTINGS_MODULE", "unknown"),
+    }
+    return JsonResponse(data, status=HTTPStatus.OK)
+
 # ---- HELPER FUNCTIONS ---- #
 def _has_field(model, name: str) -> bool:
     try:

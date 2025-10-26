@@ -1,5 +1,6 @@
 import pytest
 from django.db import IntegrityError
+from django.test import TestCase
 from ai_scale_app.models import (
     User,
     Subject,
@@ -12,7 +13,7 @@ from ai_scale_app.models import (
     AcknowledgementFormItem,
 )
 
-# run this by pytest ai_scale_app/tests/test_models.py
+# run this by python manage.py test ai_scale_app.tests.test_models
 
 
 # user
@@ -208,3 +209,39 @@ def test_ackformitem_optional_fields():
     assert item.purposeUsage is None
     assert item.keyPromptsUsed is None
 
+from django.db import IntegrityError
+from ai_scale_app.models import TemplateOwnership, AcknowledgementForm, AcknowledgementFormItem, AIUseScale
+
+class ExtendedModelTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username="staff", role=User.Role.STAFF)
+        self.subject = Subject.objects.create(
+            subjectCode="COMP2000", semester=2, year=2025, name="Data Structures"
+        )
+        self.template = Template.objects.create(ownerId=self.user, name="Main Template", subject=self.subject)
+        self.ai_scale = AIUseScale.objects.create(name="Level 1")
+
+    def test_template_ownership_unique(self):
+        TemplateOwnership.objects.create(templateId=self.template, ownerId=self.user)
+        with self.assertRaises(IntegrityError):
+            TemplateOwnership.objects.create(templateId=self.template, ownerId=self.user)
+
+    def test_ack_form_and_items(self):
+        form = AcknowledgementForm.objects.create(templateId=self.template, name="Form 1", subject=self.subject)
+        AcknowledgementFormItem.objects.create(ackFormId=form, aiToolsUsed="ChatGPT", purposeUsage="Research", keyPromptsUsed="Summarize code")
+        self.assertEqual(AcknowledgementFormItem.objects.count(), 1)
+
+    def test_ai_use_scale_assignment(self):
+        item = AcknowledgementFormItem.objects.create(ackFormId=AcknowledgementForm.objects.create(templateId=self.template, name="Form 2", subject=self.subject))
+        item.aiToolsUsed = "Midjourney"
+        item.save()
+        self.assertTrue("Midjourney" in item.aiToolsUsed)
+
+
+@pytest.mark.django_db
+def test_cascade_delete_user_deletes_templates():
+    user = User.objects.create(username="tempuser")
+    subj = Subject.objects.create(subjectCode="TEST1000", semester=1, year=2025)
+    Template.objects.create(ownerId=user, name="TempTemplate", subject=subj)
+    user.delete()
+    assert Template.objects.count() == 0

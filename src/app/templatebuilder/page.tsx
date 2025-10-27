@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import AIGuidelinesBuilder from '../components/AIGuidelinesBuilder';
 import { Button } from '../components/button';
 import { ArrowLeft } from 'lucide-react';
+import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,7 @@ import Image from 'next/image';
 
 export default function App() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const router = useRouter();
 
   const handleBackClick = () => {
     setShowSaveDialog(true);
@@ -35,9 +37,7 @@ export default function App() {
 
   const handleDontSave = () => {
     setShowSaveDialog(false);
-
-    // Navigate back without saving (would typically use router here)
-    window.history.back();
+    router.push("/dashboard");
   };
 
   const handleCancel = () => {

@@ -19,6 +19,12 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from .models import Template
 from django.utils.timezone import now
+from .models import AuditLog
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from ai_scale_app.models import AIUseScale, AuditLog
+
 
 logger = logging.getLogger(__name__)    
 
@@ -831,3 +837,40 @@ def recent_activity(request):
         "recentTemplates": recent_templates,
         "timestamp": now().isoformat()
     })
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def update_ai_use_scale(request):
+    try:
+        data = request.data
+        scale_id = data.get("id")
+        name = data.get("name")
+
+        if scale_id:
+            # Update existing
+            scale = AIUseScale.objects.get(id=scale_id)
+            scale.name = name
+            scale.save()
+
+            AuditLog.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                action="UPDATE",
+                model_name="AIUseScale",
+                object_id=scale.id,
+                details={"name": name},
+            )
+        else:
+            # Create new
+            scale = AIUseScale.objects.create(name=name)
+
+            AuditLog.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                action="CREATE",
+                model_name="AIUseScale",
+                object_id=scale.id,
+                details={"name": name},
+            )
+
+        return Response({"success": True, "id": scale.id})
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)

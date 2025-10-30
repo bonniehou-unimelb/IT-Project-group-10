@@ -184,6 +184,10 @@ export default function AIGuidelinesBuilder() {
     }
   }, [templateId, payload, isFetched]);
 
+  useEffect(() => {
+    setIsFetched(false);
+  }, [templateId]);
+
   const handleBackClick = () => { 
     if (dirty) {
       setShowSaveDialog(true);
@@ -191,6 +195,12 @@ export default function AIGuidelinesBuilder() {
       router.push("/myTemplates");
     }
   }; 
+
+  const handleSaveAndExit = async () => {
+    await handleSaveGuidelines();
+    router.push("/myTemplates?justSaved=1");
+  };
+
   const handleDontSave = () => { 
     setShowSaveDialog(false); 
     router.push("/myTemplates"); 
@@ -215,7 +225,6 @@ export default function AIGuidelinesBuilder() {
     ]);
     setDirty(true);
   };
-
 
   const removeAIUseLevel = (id: string | number) => {
     if (aiUseLevels.length <= 1) return; // Keep at least 1 level
@@ -270,38 +279,49 @@ export default function AIGuidelinesBuilder() {
       await new Promise<void>((resolve, reject) => {
         const onSuccess = async ({ templateId: newId, version: newVersion }: { templateId: number; version: number }) => {
           try {
+            const prevId = templateId;
+            const prevVersion = version;
+
             setTemplateId(newId);
             setCurrentVersion(newVersion);
             setVersion(newVersion);
 
-            // Add all template items (updated or not) to the template just created
-            // Call addTemplateItemAction to add the item for every row in the guidelines form
-            if (!isEdit) {
-              const addItemOnce = (level: AIUseLevel) => {
-                const addItem = addTemplateItemAction(newId);
-                return addItem({
-                  task: level.task ?? 'NA',
-                  aiUseScaleLevel_name: level.aiUseScaleLevel_name ?? 'NA',
-                  instructionsToStudents: level.instructions ?? 'NA',
-                  examples: level.examples ?? 'NA',
-                  aiGeneratedContent: level.aiGeneratedContent ?? 'NA',
-                  useAcknowledgement: !!level.acknowledgement,
-                });
-              };
-              await Promise.all(aiUseLevels.map(addItemOnce));
+            const createdNewVersion = !prevId || newId !== prevId || newVersion !== prevVersion;
+            let levelsToAdd = aiUseLevels;
+
+            if (!createdNewVersion) {
+              const payloadIds = new Set((payload?.template_items ?? []).map((it: any) => String(it.id)));
+              const isNewLevel = (lvl: { id: string | number }) => !payloadIds.has(String(lvl.id));
+              levelsToAdd = aiUseLevels.filter(isNewLevel);
             }
 
+            if (levelsToAdd.length > 0) {
+              const addItem = addTemplateItemAction(newId);
+              await Promise.all(
+                levelsToAdd.map((level) =>
+                  addItem({
+                    task: level.task ?? "NA",
+                    aiUseScaleLevel_name: level.aiUseScaleLevel_name ?? "NA",
+                    instructionsToStudents: level.instructions ?? "NA",
+                    examples: level.examples ?? "NA",
+                    aiGeneratedContent: level.aiGeneratedContent ?? "NA",
+                    useAcknowledgement: !!level.acknowledgement,
+                  })
+                )
+              );
+            }
+
+            // Update URL (stay on builder) so a manual refresh loads the saved template
             const params = new URLSearchParams(searchParams.toString());
             params.set("template_id", String(newId));
             router.replace(`${pathname}?${params.toString()}`);
-            setDirty(false);
 
-            console.log("Template items created.")
+            setDirty(false);
             resolve();
           } catch (err) {
             reject(err instanceof Error ? err : new Error(String(err)));
           }
-        };
+};
 
         const onError = (msg: string) => reject(new Error(msg));
 
@@ -309,7 +329,6 @@ export default function AIGuidelinesBuilder() {
         const save = createOrUpdateTemplateAction(user.username, onSuccess, onError);
         console.log("New template created.")
         save(form);
-        router.push("/myTemplates")
       });
 
     } catch (e: any) {
@@ -781,7 +800,7 @@ export default function AIGuidelinesBuilder() {
           </AlertDialogCancel>
           <Button variant="outline" onClick={handleDontSave}> Don't Save 
           </Button> 
-          <AlertDialogAction onClick={handleSaveGuidelines}> Save & Continue 
+          <AlertDialogAction onClick={handleSaveAndExit}> Save & Continue 
           </AlertDialogAction> 
         </AlertDialogFooter>
       </AlertDialogContent> 

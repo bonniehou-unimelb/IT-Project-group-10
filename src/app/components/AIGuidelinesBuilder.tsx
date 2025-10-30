@@ -15,6 +15,7 @@ import { useAuth } from "../authentication/auth";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import * as XLSX from 'xlsx';
+import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 
 interface AIUseLevel {
   id: number | string;
@@ -436,14 +437,21 @@ export default function AIGuidelinesBuilder() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+             {/* Versioning Dropdown Menu */}
               <div>
                 <Label htmlFor="version">Version</Label>
-                <Input
-                  id="version"
-                  value={String(version)}
-                  onChange={(e) => setVersion(Number(e.target.value))}
-                  className="mt-1"
-                />
+                <div className="py-1">
+                <select
+                  name="version"
+                  value={version}
+                  onChange={(e) => router.push('/homePage')}
+                  className="w-60 py-2 bg-gray-50 rounded-lg">
+                  <option value="0">0</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                </select>
+              </div>
+             
               </div>
               <div>
                 <Label htmlFor="subject-code">Subject Code</Label>

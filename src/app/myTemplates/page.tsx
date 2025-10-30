@@ -222,8 +222,7 @@ export default function Dashboard() {
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
                 onClick={() => {
                   if (!user || isCreating) return;
-                  createNewScale();
-                  router.push("/templates/new");
+                  router.push("/templatebuilder?mode=new");
                 }}
                 disabled={!user || isCreating}
               >
@@ -301,7 +300,7 @@ export default function Dashboard() {
                             className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(`/?template_id=${tpl.templateId}`);
+                              router.push(`/templatebuilder?template_id=${tpl.templateId}`);
                             }}
                           >
                             Edit

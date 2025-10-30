@@ -5,15 +5,25 @@ import { Button } from './button';
 import { Input } from './input';
 import { Textarea } from './textarea';
 import { Card, CardContent, CardHeader} from './card';
-import { Plus, Trash2, Settings} from 'lucide-react';
+import { Plus, Trash2, Settings, ArrowLeft} from 'lucide-react';
 import { Label } from './label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
 import AITemplateRepository from './AITemplateRepository';
-import { useTemplateDetails, createOrUpdateTemplateAction, addTemplateItemAction, deleteTemplateAction } from './api';
+import { useTemplateDetails, createOrUpdateTemplateAction, addTemplateItemAction } from './api';
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "../authentication/auth";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
+import { AlertDialog, 
+        AlertDialogAction, 
+        AlertDialogCancel, 
+        AlertDialogContent, 
+        AlertDialogDescription, 
+        AlertDialogFooter, 
+        AlertDialogHeader, 
+        AlertDialogTitle, 
+} from '../components/alert-dialog'; 
+import Image from 'next/image';
 import * as XLSX from 'xlsx';
 
 interface AIUseLevel {
@@ -26,30 +36,21 @@ interface AIUseLevel {
   acknowledgement: boolean;
 }
 
-interface TemplateScale {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  levels: Omit<AIUseLevel, 'id'>[];
-}
-
 export default function AIGuidelinesBuilder() {
   //pass in the template_id of the template we want to display from dashboard page
   const router = useRouter();
   const searchParams = useSearchParams();
-  const templateID = (() => {
-    const v = Number(searchParams.get("template_id"));
-    return v; 
-  })();
+  const templateIdParam = searchParams.get("template_id");
+  const initialTemplateId = templateIdParam ? Number(templateIdParam) : null;
+  const [templateId, setTemplateId] = useState<number | null>(initialTemplateId);
   const [username, setUsername] = useState<string>("");
   const { user, pageLoading, refresh } = useAuth();
   const pathname = usePathname();
+  const { data: payload, loading: detailLoading, error: detailErr, open, setData } = useTemplateDetails();
 
   //Store temporarily the current fields of the form
   const [guidelinesTitle, setGuidelinesTitle] = useState('AI Use Guidelines for Assessment');
   const [assessmentType, setAssessmentType] = useState('');
-  const { data: payload, loading: detailLoading, error: detailErr, open, setData: setPayload } = useTemplateDetails(templateID);
   const [subjectCode, setSubjectCode] = useState<string>("");
   const [semester, setSemester] = useState<number>(1);
   const [year, setYear] = useState<number>(2025);
@@ -60,9 +61,13 @@ export default function AIGuidelinesBuilder() {
   // Save guidelines button states
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [templateId, setTemplateId] = useState<number | null>(null);
   const [currentVersion, setCurrentVersion] = useState<number>(0);
   const [exportFormat, setExportFormat] = useState<'excel' | 'pdf'>('excel');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+
+  //Tracking changes made to the template
+  const [dirty, setDirty] = useState(false);
+  const markDirty = () => setDirty(true);
 
   // Reroute to log in page if user session invalid
   useEffect(() => {
@@ -75,19 +80,15 @@ export default function AIGuidelinesBuilder() {
     if (user?.username) setUsername(user.username);
   }, [user]);
 
-  // Reroute to new template once new version saved
   useEffect(() => {
-    if (!templateId) return;
-    // build new url with the updated template id
-    const params = new URLSearchParams(Array.from(searchParams.entries()));
-    params.set("template_id", String(templateId));
-
-    const nextUrl = `${pathname}?${params.toString()}`;
-    window.location.assign(nextUrl);
-    console.log("[reroute] ->", nextUrl);
-    router.replace(nextUrl);
-  }, [templateId]);
-
+  const handler = (e: BeforeUnloadEvent) => {
+    if (!dirty) return;
+    e.preventDefault();
+    e.returnValue = "";
+  };
+  window.addEventListener("beforeunload", handler);
+  return () => window.removeEventListener("beforeunload", handler);
+}, [dirty]);
   
   const [aiUseLevels, setAIUseLevels] = useState<AIUseLevel[]>([
     {
@@ -128,14 +129,31 @@ export default function AIGuidelinesBuilder() {
     },
   ]);
 
-
   useEffect(() => {
-    open(templateID);
-  }, [open, templateID]);
+    if (templateId == null) return;
+    open(templateId);
+  }, [open, templateId]);
 
   // Fetch API once
   const [isFetched, setIsFetched] = useState(false);
   useEffect(() => {
+    if (templateId == null) {
+      if (!isFetched) {
+        // ensure clean defaults for a brand new template
+        setGuidelinesTitle('AI Use Guidelines for Assessment');
+        setAssessmentType('Assignment');
+        setSubjectCode('COMP10001');
+        setSemester(1);
+        setYear(2025);
+        setVersion(0);
+        setIsPublishable(false);
+        setIsTemplate(false);
+        setIsFetched(true);
+        setDirty(false);
+      }
+      return;
+    }
+
     if (payload && !isFetched) {
       // Get the info to display for template details
       setGuidelinesTitle(payload.name ?? 'AI Use Guidelines for Assessment');
@@ -143,7 +161,6 @@ export default function AIGuidelinesBuilder() {
       setSubjectCode(payload.subject?.code ?? "COMP10001");
       setSemester(payload.subject?.semester ?? 1);
       setYear(payload.subject?.year ?? 2025);
-      setVersion(payload.version ?? 0);
       setIsPublishable(Boolean(payload.isPublishable));
       setIsTemplate(Boolean(payload.isTemplate));
       setVersion(Number(payload.version ?? 0));
@@ -163,8 +180,24 @@ export default function AIGuidelinesBuilder() {
 
       if (mapped.length > 0) setAIUseLevels(mapped);
       setIsFetched(true);
+      setDirty(false);
     }
-  }, [payload, isFetched]);
+  }, [templateId, payload, isFetched]);
+
+  const handleBackClick = () => { 
+    if (dirty) {
+      setShowSaveDialog(true);
+    } else {
+      router.push("/myTemplates");
+    }
+  }; 
+  const handleDontSave = () => { 
+    setShowSaveDialog(false); 
+    router.push("/myTemplates"); 
+  }; 
+  const handleCancel = () => { 
+    setShowSaveDialog(false); 
+  };
 
   const addAIUseLevel = () => {
     const newId = Date.now().toString();
@@ -180,12 +213,14 @@ export default function AIGuidelinesBuilder() {
         acknowledgement: true,
       },
     ]);
+    setDirty(true);
   };
 
 
   const removeAIUseLevel = (id: string | number) => {
     if (aiUseLevels.length <= 1) return; // Keep at least 1 level
     setAIUseLevels(aiUseLevels.filter(level => level.id !== id));
+    setDirty(true);
   };
 
   //update description for AI use level
@@ -193,6 +228,7 @@ export default function AIGuidelinesBuilder() {
     setAIUseLevels(aiUseLevels.map(level => 
       level.id === id ? { ...level, [field]: value } : level
     ));
+    setDirty(true);
   };
 
   const handleSelectTemplate = (template: any) => {
@@ -202,6 +238,7 @@ export default function AIGuidelinesBuilder() {
     }));
     setAIUseLevels(newLevels);
     setGuidelinesTitle(template.name);
+    setDirty(true);
   };
 
   async function handleSaveGuidelines() {
@@ -209,6 +246,12 @@ export default function AIGuidelinesBuilder() {
     setError(null);
 
     try {
+      if (!user?.username) {
+        setError("Please sign in or wait for session to load before saving.");
+        return;
+    }
+
+      const isEdit = templateId != null;
       // Build a form object for input into createOrUpdateTemplateAction
       const form = {
         name: guidelinesTitle,
@@ -217,41 +260,41 @@ export default function AIGuidelinesBuilder() {
         semester: Number(semester),
         scope: assessmentType,
         description: "", 
-        version: Number(currentVersion), 
+        version: Number(version), 
         isPublishable: isPublishable,
         isTemplate: isTemplate,
+        username: user.username,
+        ...(isEdit ? { templateId } : {}),
       };
 
       await new Promise<void>((resolve, reject) => {
-        const onSuccess = async ({ templateId: newId, version }: { templateId: number; version: number }) => {
+        const onSuccess = async ({ templateId: newId, version: newVersion }: { templateId: number; version: number }) => {
           try {
             setTemplateId(newId);
-            setCurrentVersion(version);
-            setVersion(version);
+            setCurrentVersion(newVersion);
+            setVersion(newVersion);
 
             // Add all template items (updated or not) to the template just created
             // Call addTemplateItemAction to add the item for every row in the guidelines form
-            const addItemOnce = (level: AIUseLevel) => {
-              const addItem = addTemplateItemAction(newId);
-              return addItem({
-                task: level.task ?? 'NA',
-                aiUseScaleLevel_name: level.aiUseScaleLevel_name ?? 'NA',
-                instructionsToStudents: level.instructions ?? 'NA',
-                examples: level.examples ?? 'NA',
-                aiGeneratedContent: level.aiGeneratedContent ?? 'NA',
-                useAcknowledgement: !!level.acknowledgement,
-              });
-            };
-            await Promise.all(aiUseLevels.map(addItemOnce));
+            if (!isEdit) {
+              const addItemOnce = (level: AIUseLevel) => {
+                const addItem = addTemplateItemAction(newId);
+                return addItem({
+                  task: level.task ?? 'NA',
+                  aiUseScaleLevel_name: level.aiUseScaleLevel_name ?? 'NA',
+                  instructionsToStudents: level.instructions ?? 'NA',
+                  examples: level.examples ?? 'NA',
+                  aiGeneratedContent: level.aiGeneratedContent ?? 'NA',
+                  useAcknowledgement: !!level.acknowledgement,
+                });
+              };
+              await Promise.all(aiUseLevels.map(addItemOnce));
+            }
 
-            setIsFetched(false);
-            open(newId)
-
-            // update the URL to the new template id 
-            const params = new URLSearchParams(Array.from(searchParams.entries()));
+            const params = new URLSearchParams(searchParams.toString());
             params.set("template_id", String(newId));
-            console.log(`${pathname}?${params.toString()}`);
             router.replace(`${pathname}?${params.toString()}`);
+            setDirty(false);
 
             console.log("Template items created.")
             resolve();
@@ -263,9 +306,10 @@ export default function AIGuidelinesBuilder() {
         const onError = (msg: string) => reject(new Error(msg));
 
         // Make API call to create new template object
-        const save = createOrUpdateTemplateAction(username, onSuccess, onError);
+        const save = createOrUpdateTemplateAction(user.username, onSuccess, onError);
         console.log("New template created.")
         save(form);
+        router.push("/myTemplates")
       });
 
     } catch (e: any) {
@@ -405,6 +449,18 @@ export default function AIGuidelinesBuilder() {
   }
 
   return (
+  <div className="min-h-screen bg-background flex flex-col">
+    {/* Header */} 
+    <div className="bg-gradient-to-r from-primary to-blue-900 text-primary-foreground border-b"> 
+      <div className="max-w-7xl mx-auto px-6 py-6 flex items-center gap-4"> 
+        <Image src="icons/logo.svg" alt="University of Melbourne" width={100} height={100} /> 
+        <Button variant="secondary" size="sm" onClick={handleBackClick} className="bg-white/10 hover:bg-white/20 text-white border-white/20" >
+        <ArrowLeft className="h-4 w-4 mr-2" /> Back </Button>
+        <h1 className="text-2xl font-semibold">AI Use Scales Builder</h1> 
+      </div>
+    </div>
+
+    
     <div className="flex h-[calc(100vh-120px)]">
       <AITemplateRepository onSelectTemplate={handleSelectTemplate} />
       <div className="flex-1 overflow-auto">
@@ -415,11 +471,11 @@ export default function AIGuidelinesBuilder() {
           <div className="space-y-4">
             <div className="flex items-start gap-4">
               <div className="flex-1 max-w-md">
-                <Label htmlFor="guidelines-title">Asessment Title</Label>
+                <Label htmlFor="guidelines-title">Assessment Title</Label>
                 <Input
                   id="guidelines-title"
                   value={guidelinesTitle}
-                  onChange={(e) => setGuidelinesTitle(e.target.value)}
+                  onChange={(e) => {setGuidelinesTitle(e.target.value); markDirty(); }}
                   className="mt-1"
                 />
               </div>
@@ -428,7 +484,7 @@ export default function AIGuidelinesBuilder() {
                 <Input
                   id="assessment-type"
                   value={assessmentType}
-                  onChange={(e) => setAssessmentType(e.target.value)}
+                  onChange={(e) => {setAssessmentType(e.target.value); markDirty();}}
                   placeholder="e.g., Research Paper, Project, Exam..."
                   className="mt-1"
                 />
@@ -441,7 +497,7 @@ export default function AIGuidelinesBuilder() {
                 <Input
                   id="version"
                   value={String(version)}
-                  onChange={(e) => setVersion(Number(e.target.value))}
+                  onChange={(e) => {setVersion(Number(e.target.value)); markDirty(); }}
                   className="mt-1"
                 />
               </div>
@@ -450,7 +506,7 @@ export default function AIGuidelinesBuilder() {
                 <Input
                   id="subject-code"
                   value={String(subjectCode)}
-                  onChange={(e) => setSubjectCode(e.target.value)}
+                  onChange={(e) => {setSubjectCode(e.target.value); markDirty(); }}
                   className="mt-1"
                 />
               </div>
@@ -459,7 +515,7 @@ export default function AIGuidelinesBuilder() {
                 <Input
                   id="semester"
                   value={String(semester)}
-                  onChange={(e) => setSemester(Number(e.target.value))}
+                  onChange={(e) => {setSemester(Number(e.target.value)); markDirty(); }}
                   className="mt-1"
                 />
               </div>
@@ -468,7 +524,7 @@ export default function AIGuidelinesBuilder() {
                 <Input
                   id="year"
                   value={String(year)}
-                  onChange={(e) => setYear(Number(e.target.value))}
+                  onChange={(e) => {setYear(Number(e.target.value)); markDirty(); }}
                   className="mt-1"
                 />
               </div>
@@ -482,7 +538,7 @@ export default function AIGuidelinesBuilder() {
                   id="is-publishable"
                   type="checkbox"
                   checked={isPublishable}
-                  onChange={(e) => setIsPublishable(e.target.checked)}
+                  onChange={(e) => {setIsPublishable(e.target.checked); markDirty(); }}
                   className="h-4 w-4"
                 />
                 <span className="text-sm text-muted-foreground">
@@ -510,14 +566,14 @@ export default function AIGuidelinesBuilder() {
                       <div key={level.id} className="flex items-center gap-3 p-3 border rounded">
                         <Input
                           value={level.aiUseScaleLevel_name}
-                          onChange={(e) => updateAIUseLevel(level.id, 'aiUseScaleLevel_name', e.target.value)}
+                          onChange={(e) => {updateAIUseLevel(level.id, 'aiUseScaleLevel_name', e.target.value); markDirty(); }}
                           placeholder="Level name"
                           className="flex-1"
                         />
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => removeAIUseLevel(level.id)}
+                          onClick={() => {removeAIUseLevel(level.id); markDirty(); }}
                           disabled={aiUseLevels.length <= 1}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -699,7 +755,7 @@ export default function AIGuidelinesBuilder() {
                   Export as {exportFormat === "pdf" ? "PDF" : "Excel"}
                 </Button>
 
-                <Button onClick={handleSaveGuidelines} disabled={isSaving}>
+                <Button onClick={handleSaveGuidelines} disabled={isSaving || !user?.username}>
                   {isSaving ? "Saving…" : "Save Guidelines"}
                 </Button>
               </div>
@@ -711,5 +767,25 @@ export default function AIGuidelinesBuilder() {
         </div>
       </div>
     </div>
-  );
+
+    {/* Save confirmation dialog */}
+    <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}> 
+      <AlertDialogContent> 
+        <AlertDialogHeader>
+          <AlertDialogTitle>Save your work?</AlertDialogTitle> 
+           <AlertDialogDescription> You have unsaved changes. Would you like to save your progress before leaving this page? 
+            </AlertDialogDescription> 
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleCancel}> Cancel 
+          </AlertDialogCancel>
+          <Button variant="outline" onClick={handleDontSave}> Don't Save 
+          </Button> 
+          <AlertDialogAction onClick={handleSaveGuidelines}> Save & Continue 
+          </AlertDialogAction> 
+        </AlertDialogFooter>
+      </AlertDialogContent> 
+    </AlertDialog> 
+  </div>
+ ); 
 }

@@ -227,7 +227,7 @@ export default function AIGuidelinesBuilder() {
   };
 
   const removeAIUseLevel = (id: string | number) => {
-    if (aiUseLevels.length <= 1) return; // Keep at least 1 level
+    if (aiUseLevels.length <= 1) return;
     setAIUseLevels(aiUseLevels.filter(level => level.id !== id));
     setDirty(true);
   };
@@ -311,7 +311,7 @@ export default function AIGuidelinesBuilder() {
               );
             }
 
-            // Update URL (stay on builder) so a manual refresh loads the saved template
+            // Updating URL (stay on builder) so a manual refresh loads the saved template
             const params = new URLSearchParams(searchParams.toString());
             params.set("template_id", String(newId));
             router.replace(`${pathname}?${params.toString()}`);
@@ -325,7 +325,7 @@ export default function AIGuidelinesBuilder() {
 
         const onError = (msg: string) => reject(new Error(msg));
 
-        // Make API call to create new template object
+        // API call to create new template object
         const save = createOrUpdateTemplateAction(user.username, onSuccess, onError);
         console.log("New template created.")
         save(form);
@@ -479,7 +479,6 @@ export default function AIGuidelinesBuilder() {
       </div>
     </div>
 
-    
     <div className="flex h-[calc(100vh-120px)]">
       <AITemplateRepository onSelectTemplate={handleSelectTemplate} />
       <div className="flex-1 overflow-auto">
@@ -566,8 +565,7 @@ export default function AIGuidelinesBuilder() {
               </div>
             </div>
         </div>
-
-
+        
             <div className="flex justify-end">
               <Dialog>
                 <DialogTrigger asChild>

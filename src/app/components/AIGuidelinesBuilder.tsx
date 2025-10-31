@@ -25,6 +25,7 @@ import { AlertDialog,
 } from '../components/alert-dialog'; 
 import Image from 'next/image';
 import * as XLSX from 'xlsx';
+import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 
 interface AIUseLevel {
   id: number | string;
@@ -57,6 +58,8 @@ export default function AIGuidelinesBuilder() {
   const [version, setVersion] = useState<number>(0);
   const [isPublishable, setIsPublishable] = useState<boolean>(false);
   const [isTemplate, setIsTemplate] = useState<boolean>(false);
+  const [versionItems, setVersionItems] = useState<{templateId:number; version:number}[]>([]);
+  const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
 
   // Save guidelines button states
   const [isSaving, setIsSaving] = useState(false);
@@ -90,6 +93,140 @@ export default function AIGuidelinesBuilder() {
   return () => window.removeEventListener("beforeunload", handler);
 }, [dirty]);
   
+    if (!templateId) return;
+    // build new url with the updated template id
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    params.set("template_id", String(templateId));
+
+    const nextUrl = `${pathname}?${params.toString()}`;
+    window.location.assign(nextUrl);
+    console.log("[reroute] ->", nextUrl);
+    router.replace(nextUrl);
+  }, [templateId]);
+
+  const payloadName = payload?.name ?? null;
+  const payloadSubject = payload?.subject ?? null;
+
+
+  useEffect(() => {
+    setVersionItems([]);
+    setSelectedVersion(null);
+  }, [templateID]);
+
+  useEffect(() => {
+    if (!templateID && !payloadName) return;
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const q = new URLSearchParams();
+        if (templateID) q.set("template_id", String(templateID));
+        else if (payloadName) q.set("name", payloadName);
+
+        if (payloadSubject?.code) q.set("subjectCode", payloadSubject.code);
+        if (payloadSubject?.semester != null) q.set("semester", String(payloadSubject.semester));
+        if (payloadSubject?.year != null) q.set("year", String(payloadSubject.year));
+
+        const res = await fetch(`http://localhost:8000/api/templates/versions/?${q.toString()}`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error(`Failed to load versions (${res.status})`);
+        const data = await res.json();
+
+        // de-dupe by version and sort ascending
+        const byVer = new Map<number, {templateId:number; version:number}>();
+        for (const r of (Array.isArray(data?.versions) ? data.versions : [])) {
+          if (typeof r?.version === "number" && !byVer.has(r.version)) byVer.set(r.version, r);
+        }
+        const cleaned = Array.from(byVer.values()).sort((a,b) => a.version - b.version);
+        setVersionItems(cleaned);
+
+
+        if (typeof payload?.version === "number" && cleaned.some(v => v.version === payload.version)) {
+          setSelectedVersion(payload.version);
+        } else if (cleaned.length) {
+          setSelectedVersion(cleaned[cleaned.length - 1].version);
+        } else {
+          setSelectedVersion(null);
+        }
+      } catch (e: any) {
+        if (e?.name !== "AbortError") {
+          console.error("Version load failed:", e);
+          setVersionItems([]);
+          setSelectedVersion(null);
+        }
+      }
+    })();
+
+    return () => controller.abort();
+  }, [
+    templateID,
+    payloadName,
+    payloadSubject?.code,
+    payloadSubject?.semester,
+    payloadSubject?.year,
+  ]);
+
+  // Prefer the payload's own version number if present
+  useEffect(() => {
+    if (typeof payload?.version === "number") {
+      setSelectedVersion(payload.version);
+    }
+  }, [payload?.version]);
+
+  useEffect(() => {
+    // Nothing loaded — show placeholder
+    if (!Array.isArray(versionItems) || versionItems.length === 0) {
+      setSelectedVersion(null);
+      return;
+    }
+
+    // If we have payload.version (from useTemplateDetails), trust it first
+    if (typeof payload?.version === "number") {
+      const has = versionItems.some(v => v.version === payload.version);
+      if (has) {
+        setSelectedVersion(payload.version);
+        return;
+      }
+    }
+
+    // Otherwise, if URL template_id matches one of the items, take its version
+    if (typeof templateID === "number" && !Number.isNaN(templateID)) {
+      const byTid = versionItems.find(v => v.templateId === templateID);
+      if (byTid) {
+        setSelectedVersion(byTid.version);
+        return;
+      }
+    }
+
+    // Fallback to the latest (highest) version in the list
+    const sorted = [...versionItems].sort((a, b) => a.version - b.version);
+    setSelectedVersion(sorted[sorted.length - 1]?.version ?? null);
+  }, [versionItems, templateID, payload?.version]);
+
+  const onSelectVersionId = (tid: number, vnum?: number) => {
+    try {
+      setIsFetched(false);
+      if (typeof vnum === "number") {
+        setSelectedVersion(vnum);
+        setVersion(vnum);
+        setCurrentVersion(vnum);
+      }
+
+      open(tid);
+
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set("template_id", String(tid));
+      const nextUrl = `${pathname}?${params.toString()}`;
+
+      router.replace(nextUrl);
+    } catch (e) {
+      console.error("Failed to switch version:", e);
+    }
+  };
+
+
   const [aiUseLevels, setAIUseLevels] = useState<AIUseLevel[]>([
     {
       id: '1',
@@ -163,9 +300,10 @@ export default function AIGuidelinesBuilder() {
       setYear(payload.subject?.year ?? 2025);
       setIsPublishable(Boolean(payload.isPublishable));
       setIsTemplate(Boolean(payload.isTemplate));
-      setVersion(Number(payload.version ?? 0));
-      setCurrentVersion(Number(payload.version ?? 0)); 
-
+      if (typeof payload.version === "number") {
+        setVersion(payload.version);
+        setCurrentVersion(payload.version);
+      }
 
       // Map API template_items to table rows for display
       const mapped = (payload.template_items ?? []).map((it, idx) => ({
@@ -510,6 +648,7 @@ export default function AIGuidelinesBuilder() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+             {/* Versioning Dropdown Menu */}
               <div>
                 <Label htmlFor="version">Version</Label>
                 <Input
@@ -518,6 +657,37 @@ export default function AIGuidelinesBuilder() {
                   onChange={(e) => {setVersion(Number(e.target.value)); markDirty(); }}
                   className="mt-1"
                 />
+                <div className="py-1">
+                  <select
+                    id="version"
+                    name="version"
+                    value={selectedVersion != null ? String(selectedVersion) : ""}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      const match = versionItems.find(x => x.version === v);
+                      if (match) {
+                        onSelectVersionId(match.templateId, v);
+                      }
+                    }}
+                    className="w-60 py-2 bg-gray-50 rounded-lg"
+                  >
+                    {selectedVersion == null && (
+                      <option value="" disabled>
+                        Select a version…
+                      </option>
+                    )}
+                    {versionItems
+                      .slice()
+                      .sort((a, b) => a.version - b.version)
+                      .map(v => (
+                        <option key={v.templateId} value={String(v.version)}>
+                          {v.version}
+                        </option>
+                      ))}
+                  </select>
+
+              </div>
+             
               </div>
               <div>
                 <Label htmlFor="subject-code">Subject Code</Label>

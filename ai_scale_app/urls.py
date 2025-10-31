@@ -25,5 +25,6 @@ urlpatterns = [
     path("system-overview/", views.system_overview, name="system-overview"),
     path("system-overview/", views.system_overview, name="system-overview"),
     path("recent-activity/", views.recent_activity, name="recent-activity"),
-    path("api/community/templates/", community_templates, name="community-templates")
+    path("api/community/templates/", community_templates, name="community-templates"),
+    path("api/templates/versions/", views.list_template_versions, name="template_versions")
 ]

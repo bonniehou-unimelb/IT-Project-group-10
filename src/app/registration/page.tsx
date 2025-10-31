@@ -165,7 +165,6 @@ export default function LoginPage() {
                   className="w-full pl-3 pr-10 py-3 bg-gray-300 border-gray-600 rounded-xl text-gray-900 hover:bg-gray-100"
                   required
                 >
-                  <option value="STUDENT">Student</option>
                   <option value="STAFF">Staff</option>
                   <option value="COORDINATOR">Coordinator</option>
                   <option value="ADMIN">Admin</option>

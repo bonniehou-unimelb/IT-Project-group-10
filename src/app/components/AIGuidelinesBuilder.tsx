@@ -93,6 +93,8 @@ export default function AIGuidelinesBuilder() {
   return () => window.removeEventListener("beforeunload", handler);
 }, [dirty]);
   
+  // Reroute to new template once new version saved
+  useEffect(() => {
     if (!templateId) return;
     // build new url with the updated template id
     const params = new URLSearchParams(Array.from(searchParams.entries()));
@@ -103,6 +105,7 @@ export default function AIGuidelinesBuilder() {
     console.log("[reroute] ->", nextUrl);
     router.replace(nextUrl);
   }, [templateId]);
+    
 
   const payloadName = payload?.name ?? null;
   const payloadSubject = payload?.subject ?? null;
@@ -111,16 +114,16 @@ export default function AIGuidelinesBuilder() {
   useEffect(() => {
     setVersionItems([]);
     setSelectedVersion(null);
-  }, [templateID]);
+  }, [templateId]);
 
   useEffect(() => {
-    if (!templateID && !payloadName) return;
+    if (!templateId && !payloadName) return;
     const controller = new AbortController();
 
     (async () => {
       try {
         const q = new URLSearchParams();
-        if (templateID) q.set("template_id", String(templateID));
+        if (templateId) q.set("template_id", String(templateId));
         else if (payloadName) q.set("name", payloadName);
 
         if (payloadSubject?.code) q.set("subjectCode", payloadSubject.code);
@@ -161,7 +164,7 @@ export default function AIGuidelinesBuilder() {
 
     return () => controller.abort();
   }, [
-    templateID,
+    templateId,
     payloadName,
     payloadSubject?.code,
     payloadSubject?.semester,
@@ -192,8 +195,8 @@ export default function AIGuidelinesBuilder() {
     }
 
     // Otherwise, if URL template_id matches one of the items, take its version
-    if (typeof templateID === "number" && !Number.isNaN(templateID)) {
-      const byTid = versionItems.find(v => v.templateId === templateID);
+    if (typeof templateId === "number" && !Number.isNaN(templateId)) {
+      const byTid = versionItems.find(v => v.templateId === templateId);
       if (byTid) {
         setSelectedVersion(byTid.version);
         return;
@@ -203,7 +206,7 @@ export default function AIGuidelinesBuilder() {
     // Fallback to the latest (highest) version in the list
     const sorted = [...versionItems].sort((a, b) => a.version - b.version);
     setSelectedVersion(sorted[sorted.length - 1]?.version ?? null);
-  }, [versionItems, templateID, payload?.version]);
+  }, [versionItems, templateId, payload?.version]);
 
   const onSelectVersionId = (tid: number, vnum?: number) => {
     try {

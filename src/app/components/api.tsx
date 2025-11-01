@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -57,29 +57,64 @@ function parseJSON<T>(res: Response): Promise<T> {
 }
 
 //Fetch entries in the template 
-export function useTemplateDetails(templateID: number) {
-  const [templateId, setTemplateId] = useState<number>(templateID);
+export function useTemplateDetails() {
+  const [templateId, setTemplateId] = useState<number | null>(null);
   const [data, setData] = useState<TemplateDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setErr] = useState<string | null>(null);
 
-  const open = useCallback((templateID: number) => {
-    setTemplateId(templateID);
-    setLoading(true);
-    setErr(null);
+  // prevent races & cancel in-flight requests
+  const abortRef = useRef<AbortController | null>(null);
+  const reqSeqRef = useRef(0);
 
-    fetch(`${API_BACKEND_URL}/template/details/?templateId=${encodeURIComponent(templateID)}`, {
-      method: "GET", credentials: "include",
+  const open = useCallback((id: number) => {
+    setTemplateId(id);
+    setErr(null);
+    setLoading(true);
+
+    // cancel any in-flight request
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const seq = ++reqSeqRef.current;
+    fetch(`${API_BACKEND_URL}/template/details/?templateId=${encodeURIComponent(id)}`, {
+      method: "GET",
+      credentials: "include",
+      signal: controller.signal,
     })
       .then(async (res) => {
         const body = await parseJSON<TemplateDetails>(res);
+        if (!res.ok) {
+          throw new Error((body as any)?.error || "Failed to load template");
+        }
+        // ignore if a newer request has started
+        if (seq !== reqSeqRef.current) return;
         setData(body);
       })
-      .catch((e) => setErr(String(e?.message ?? e)))
-      .finally(() => setLoading(false));
+      .catch((e: any) => {
+        if (e?.name === "AbortError") return; // aborted due to a newer call
+        setErr(String(e?.message ?? e));
+      })
+      .finally(() => {
+        if (seq === reqSeqRef.current) setLoading(false);
+      });
   }, []);
 
-  return { data, loading, error, open, setTemplateId, setData };
+  const reload = useCallback(() => {
+    if (templateId == null) return;
+    open(templateId);
+  }, [templateId, open]);
+
+  const clear = useCallback(() => {
+    if (abortRef.current) abortRef.current.abort();
+    setTemplateId(null);
+    setData(null);
+    setErr(null);
+    setLoading(false);
+  }, []);
+
+  return { data, loading, error, open, reload, clear, templateId, setTemplateId, setData };
 }
 
 

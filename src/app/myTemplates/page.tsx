@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
 import { SearchBar } from '../components/searchbar';
-import { CreateTemplateButton } from "../components/createTemplateButton";
 import { useAuth } from "../authentication/auth";
+import React from "react";
 
 const API_BACKEND_URL = "http://localhost:8000";
 
@@ -21,6 +21,18 @@ export type TemplateSummary = {
   ownerName: string;
   isPublishable: boolean; // A table is publishable if it can be duplicated by other users of the system  
   isTemplate: boolean;    // A template is a table that is initially created by the system admin
+};
+
+type TemplateRow = {
+  templateId: number;
+  name: string;
+  subjectCode?: string | null;
+  year?: number | null;
+  semester?: number | null;
+  ownerId?: number | string | null;
+  version: number;
+  isPublishable?: boolean;
+  ownerName?: string;
 };
 
 // CSRF Cookie management 
@@ -54,7 +66,6 @@ export default function Dashboard() {
   const [query, setQuery] = useState<string>("");
   const [booted, setBooted] = useState(false);
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
-
 
   // Single refresh to wait for cookie session 
   useEffect(() => {
@@ -110,55 +121,6 @@ export default function Dashboard() {
     })();
   }, [booted, pageLoading, user]);
     
-  // Handles creating new AI use scale from scratch
-  const createNewScale = async () => {
-    setIsCreating(true);
-    setError("");
-  
-    try {
-      const csrftoken = await ensureCsrf();
-      const now = new Date();
-      const payload = {
-        username: user?.username ?? "",
-        name: "New AI Use Scale",
-        subjectCode: "DRAFT",
-        year: 2025,
-        semester: 1,
-        scope: "",
-        description: "",
-        version: 0,        
-        isPublishable: false,  // Start as non-publishable 
-        isTemplate: false,  // Start as non-template
-      };
-  
-      const res = await fetch(`${API_BACKEND_URL}/template/update/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrftoken ? { "X-CSRFToken": csrftoken, "X-Requested-With": "XMLHttpRequest" } : {}),
-        },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-  
-      // Fetch template ID only from backend 
-      const text = await res.text();
-      let body: any = {};
-      try { body = JSON.parse(text); } catch {}
-  
-      if (!res.ok || !body?.templateId) {
-        throw new Error(body?.error || text || "Failed to create template");
-      }
-  
-      // Route to default template creation with specified template ID
-      router.push(`/?template_id=${body.templateId}`);
-    } catch (e:any) {
-      setError(String(e?.message ?? e) || "Failed to create template");
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
   const filtered = query.trim()
     ? templateSum.filter((t) =>
         [t.name, t.subjectCode, t.ownerName]
@@ -166,6 +128,61 @@ export default function Dashboard() {
           .some((s) => s.toLowerCase().includes(query.toLowerCase()))
       )
     : templateSum;
+  
+  type NormalizedRow = {
+    templateId: number;
+    name: string;
+    subjectCode: string;
+    year: number;
+    semester: number;
+    ownerKey: string;  
+    ownerName: string;
+    version: number;
+    isPublishable: boolean;
+  };
+
+  const normalized: NormalizedRow[] = React.useMemo(() => {
+    return filtered.map((t) => ({
+      templateId: t.templateId,
+      name: (t.name ?? "").trim(),
+      subjectCode: (t.subjectCode ?? "").trim().toUpperCase(),
+      year: t.year ?? 0,
+      semester: t.semester ?? 0,
+      ownerKey: (t.ownerName ?? "").trim().toLowerCase(),
+      ownerName: t.ownerName ?? "NA",
+      version: t.version ?? 0,
+      isPublishable: !!t.isPublishable,
+    }));
+  }, [filtered]);
+
+  const lineageKey = (r: NormalizedRow) =>
+  [
+    r.ownerKey,
+    r.name.toLowerCase(),
+    r.subjectCode.toUpperCase(),
+    r.year,
+    r.semester,
+  ].join("|");
+
+  function pickLatestPerLineage(rows: NormalizedRow[]): NormalizedRow[] {
+    const byKey = new Map<string, NormalizedRow>();
+    for (const r of rows) {
+      const k = lineageKey(r);
+      const prev = byKey.get(k);
+      if (!prev || r.version > prev.version || (r.version === prev.version && r.templateId > prev.templateId)) {
+        byKey.set(k, r);
+      }
+    }
+    return Array.from(byKey.values()).sort((a, b) => {
+      const an = a.name.toLowerCase();
+      const bn = b.name.toLowerCase();
+      if (an !== bn) return an.localeCompare(bn);
+      return b.version - a.version;
+    });
+  }
+
+  const latest = React.useMemo(() => pickLatestPerLineage(normalized), [normalized]);
+
 
   const handleDelete = async (templateId: number) => {
     if (!confirm("Delete this template? This cannot be undone.")) return;
@@ -201,7 +218,6 @@ export default function Dashboard() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gray-50">
       
@@ -222,8 +238,7 @@ export default function Dashboard() {
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
                 onClick={() => {
                   if (!user || isCreating) return;
-                  createNewScale();
-                  router.push("/templates/new");
+                  router.push("/templatebuilder?mode=new");
                 }}
                 disabled={!user || isCreating}
               >
@@ -256,6 +271,7 @@ export default function Dashboard() {
             )}
 
             {/* Table of all the user's templates that they have created */}
+            
             <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white">
               <table className="max-w table-auto text-sm">
                 <thead className="bg-gray-50">
@@ -273,7 +289,7 @@ export default function Dashboard() {
 
                 <tbody className="divide-y divide-gray-100">
                   {/* The table contents are filtered by what is in the search bar if it is being used */}
-                  {filtered.length === 0 && !loading && (
+                  {latest.length === 0 && !loading && (
                     <tr>
                       {/* If the search query doesn't have a corresponding entry in the table,
                           we display a "not found" message */}
@@ -284,8 +300,8 @@ export default function Dashboard() {
                   )}
 
                   {/* The contents of the table */}
-                  {filtered.map((tpl) => (
-                    <tr>
+                  {latest.map((tpl) => (
+                    <tr key={tpl.templateId}>
                       <td className="px-4 py-3 truncate">{tpl.name}</td>
                       <td className="px-4 py-3">{tpl.subjectCode}</td>
                       <td className="px-4 py-3 text-center">{tpl.semester}</td>
@@ -301,7 +317,7 @@ export default function Dashboard() {
                             className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50"
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(`/?template_id=${tpl.templateId}`);
+                              router.push(`/templatebuilder?template_id=${tpl.templateId}`);
                             }}
                           >
                             Edit

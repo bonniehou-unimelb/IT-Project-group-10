@@ -459,7 +459,7 @@ useEffect(() => {
                     <CardContent className="space-y-3">
                       <Button
                         className="w-full justify-start h-12 bg-blue-600 text-primary-foreground hover:bg-blue-700"
-                        onClick={() => router.push('/templatebuilder')}
+                        onClick={() => router.push("/templatebuilder?mode=new")}
                       >
                         <Plus className="h-4 w-4 mr-3" />
                         Create New AI Guidelines
@@ -506,7 +506,6 @@ useEffect(() => {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {/* Mock community templates */}
                       <div className="space-y-3">
                         {communityLoading && (
                           <div className="p-3 text-sm text-muted-foreground">Loading community templates…</div>
@@ -522,7 +521,7 @@ useEffect(() => {
                           <div
                             key={tpl.templateId}
                             className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer"
-                            onClick={() => router.push(`/templates/${tpl.templateId}`)}
+                            onClick={() => router.push("/communityTemplates")}
                           >
                             <div className="flex-1">
                               <h4 className="text-sm font-medium">{tpl.title}</h4>

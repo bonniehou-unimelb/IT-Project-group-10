@@ -33,7 +33,6 @@ export default function AITemplateRepository({ onSelectTemplate }: AITemplateRep
       description: 'Standard scale',
       category: 'Writing',
       levels: [
-        // Ideally we'd be able to generate a template from the database
         {
         label: 'No AI Use Permitted',
         instructions: 'The assessment is completeted entirely without AI assistance. This level ensures that students rely solely on their knowledge, understanding, and skills. AI must not be used at any point during the assessment',
@@ -60,8 +59,6 @@ export default function AITemplateRepository({ onSelectTemplate }: AITemplateRep
       }
         ]
     },
-    
-      
   ];
 
   const categories = Array.from(new Set(templateScales.map(scale => scale.category)));

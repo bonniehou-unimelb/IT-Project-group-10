@@ -56,6 +56,7 @@ bun dev
 *Credits: This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.*
 
 ## Repository Structure
+```
 IT-PROJECT-GROUP-10/&nbsp;
 ├── .github/workflows/ # Automated GitHub Actions CI/CD (Node.js + Django)&nbsp;
 │ ├── django.yml&nbsp;
@@ -94,3 +95,4 @@ IT-PROJECT-GROUP-10/&nbsp;
 ├── package.json # Node.js dependencies&nbsp;
 ├── tsconfig.json # TypeScript configuration&nbsp;
 └── README.md # Project documentation&nbsp;
+```

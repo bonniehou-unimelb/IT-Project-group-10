@@ -57,41 +57,40 @@ bun dev
 
 ## Repository Structure
 IT-PROJECT-GROUP-10/
-├── .github/workflows/          # Automated GitHub Actions CI/CD (Node.js + Django)
-│   ├── django.yml
-│   └── node.js.yml
+├── .github/workflows/ # Automated GitHub Actions CI/CD (Node.js + Django)
+│ ├── django.yml
+│ └── node.js.yml
 │
-├── ai_scale_app/               # Django backend application
-│   ├── api/                    # API routing and configuration (ASGI, URLs, WSGI)
-│   ├── config/                 # Django configuration files
-│   ├── management/             # Custom Django management commands
-│   ├── migrations/             # Database migration history
-│   ├── table_data/             # Contains dummy_data.json for initial database seeding
-│   ├── tests/                  # Automated backend test scripts (pytest)
-│   ├── models.py               # ORM models defining database schema
-│   ├── serializers.py          # Django REST Framework serializers
-│   ├── views.py                # API endpoint logic
-│   ├── urls.py                 # URL routing for backend endpoints
-│   └── admin.py                # Django admin configurations
+├── ai_scale_app/ # Django backend application
+│ ├── api/ # API routing and configuration (ASGI, URLs, WSGI)
+│ ├── config/ # Django configuration files
+│ ├── management/ # Custom Django management commands
+│ ├── migrations/ # Database migration history
+│ ├── table_data/ # Contains dummy_data.json for initial database seeding
+│ ├── tests/ # Automated backend test scripts (pytest)
+│ ├── models.py # ORM models defining database schema
+│ ├── serializers.py # Django REST Framework serializers
+│ ├── views.py # API endpoint logic
+│ ├── urls.py # URL routing for backend endpoints
+│ └── admin.py # Django admin configurations
 │
-├── src/                        # Frontend (Next.js + React + TypeScript)
-│   ├── app/
-│   │   ├── authentication/     # Login and user authentication pages
-│   │   ├── registration/       # Account registration flow
-│   │   ├── communityTemplates/ # Community-shared AI Use Scale templates
-│   │   ├── myTemplates/        # User-created or saved templates
-│   │   ├── templatebuilder/    # Template creation/editing UI
-│   │   ├── homePage/           # Landing dashboard
-│   │   └── components/         # Reusable UI elements (buttons, cards, modals)
-│   ├── public/icons/           # SVG assets
-│   ├── globals.css             # TailwindCSS global styling
-│   ├── layout.tsx, page.tsx    # Root layout and main entry page
-│   └── providers.tsx           # Context providers (auth, theme)
+├── src/ # Frontend (Next.js + React + TypeScript)
+│ ├── app/
+│ │ ├── authentication/ # Login and user authentication pages
+│ │ ├── registration/ # Account registration flow
+│ │ ├── communityTemplates/ # Community-shared AI Use Scale templates
+│ │ ├── myTemplates/ # User-created or saved templates
+│ │ ├── templatebuilder/ # Template creation/editing UI
+│ │ ├── homePage/ # Landing dashboard
+│ │ └── components/ # Reusable UI elements (buttons, cards, modals)
+│ ├── public/icons/ # SVG assets
+│ ├── globals.css # TailwindCSS global styling
+│ ├── layout.tsx, page.tsx # Root layout and main entry page
+│ └── providers.tsx # Context providers (auth, theme)
 │
-├── manage.py                   # Django command-line entry point
-├── db.sqlite3                  # Local development database
-├── requirements.txt            # Python dependencies
-├── package.json                # Node.js dependencies
-├── tsconfig.json               # TypeScript configuration
-└── README.md                   # Project documentation
-
+├── manage.py # Django command-line entry point
+├── db.sqlite3 # Local development database
+├── requirements.txt # Python dependencies
+├── package.json # Node.js dependencies
+├── tsconfig.json # TypeScript configuration
+└── README.md # Project documentation

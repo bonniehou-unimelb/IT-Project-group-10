@@ -61,8 +61,6 @@ WSGI_APPLICATION = "api.wsgi.application"
 
 # ========= CORS / CSRF for Production =========
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:3000",
     "https://it-project-group-10.vercel.app",
     "https://it-project-group-10-git-deployment-winstons-projects-da2d3941.vercel.app",
 ]

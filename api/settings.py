@@ -125,3 +125,8 @@ USE_I18N = True
 USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+SESSION_COOKIE_SECURE = True  # required for HTTPS
+SESSION_COOKIE_SAMESITE = "None"  # allow cross-site cookies
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True

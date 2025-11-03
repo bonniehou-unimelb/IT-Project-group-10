@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ScrollArea } from '../components/scroll-area';
 import { Input } from '../components/input';
 import { Label } from '../components/label';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
 import { useAuth } from "../authentication/auth";
@@ -17,6 +17,7 @@ import RecentActivity from "../components/RecentActivity"
 
 
 const API_BACKEND_URL = "http://localhost:8000";
+
 
 import { 
   FileText, Plus, BookOpen, Users, TrendingUp, ArrowRight, Settings,
@@ -164,6 +165,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [role, setRole] = useState<string>("");
+  const pathname = usePathname();
 
   // Reroute to log in page if user session invalid
   useEffect(() => {
@@ -475,7 +477,7 @@ useEffect(() => {
                       <Button
                         className="w-full justify-start h-11"
                         variant="outline"
-                        onClick={() => router.push('/communityTemplates')}
+                        onClick={() => {if (pathname !== '/communityTemplates') { router.push('/communityTemplates')}}}
                       >
                         <BookOpen className="h-4 w-4 mr-3" />
                         Browse All Templates
@@ -498,7 +500,7 @@ useEffect(() => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => router.push('/communityTemplates')}
+                          onClick={() => {if (pathname !== '/communityTemplates') router.push('/communityTemplates')}}
                         >
                           View All
                           <ArrowRight className="h-4 w-4 ml-2" />
@@ -576,7 +578,7 @@ useEffect(() => {
                       <Button
                         className="w-full justify-start h-11"
                         variant="outline"
-                        onClick={() => router.push('/allTemplates')}
+                        onClick={() => router.push('/communityTemplates')}
                       >
                         <FileText className="h-4 w-4 mr-3" />
                         Browse All Templates

@@ -1,15 +1,12 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { SideBar } from '../components/sidebar';
 import { TopBar } from '../components/topbar';
 import { SearchBar } from '../components/searchbar';
-import { CreateTemplateButton } from "../components/createTemplateButton";
 import { useAuth } from "../authentication/auth";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -53,6 +50,7 @@ async function ensureCsrf(): Promise<string | null> {
 export default function Dashboard() {
   const router = useRouter();
   const { user, pageLoading, refresh } = useAuth();
+  const [booted, setBooted] = useState(false);
 
   const [templateSum, setTemplateSum] = useState<TemplateSummary[]>([]);
   const [username, setUsername] = useState<string>("");
@@ -88,10 +86,18 @@ export default function Dashboard() {
 
   // Reroute to log in page if user session invalid
   useEffect(() => {
-    if (!pageLoading && !user) router.replace("/login");
-  }, [pageLoading, user, router]);
+    if (!booted) return; 
+    if (pageLoading) return;
+    if (!user) router.replace("/login");
+  }, [booted, pageLoading, user, router]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try { await refresh?.(); } finally { if (!cancelled) setBooted(true); }
+    })();
+    return () => { cancelled = true; };
+  }, [refresh]);
 
   useEffect(() => {
     if (user?.username) setUsername(user.username);
@@ -269,54 +275,8 @@ const fetchCommunity = async (opts: { reset?: boolean } = {}) => {
   // Keep your variable name "filtered" (now equal to server results)
   const filtered = templateSum;
 
-  // Handles creating new AI use scale from scratch (kept)
-  const createNewScale = async () => {
-    setIsCreating(true);
-    setError("");
-
-    try {
-      const csrftoken = await ensureCsrf();
-      const payload = {
-        username: user?.username ?? "",
-        name: "New AI Use Scale",
-        subjectCode: "DRAFT",
-        year: 2025,
-        semester: 1,
-        scope: "",
-        description: "",
-        version: 0,          
-        isPublishable: false,
-        isTemplate: false,
-      };
-
-      const res = await fetch(`${API_BACKEND_URL}/template/update/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrftoken ? { "X-CSRFToken": csrftoken, "X-Requested-With": "XMLHttpRequest" } : {}),
-        },
-        credentials: "include",
-        cache: "no-store",
-        body: JSON.stringify(payload),
-      });
-
-      const text = await res.text();
-      let body: any = {};
-      try { body = JSON.parse(text); } catch {}
-
-      if (!res.ok || !body?.templateId) {
-        throw new Error(body?.error || text || "Failed to create template");
-      }
-
-      router.push(`/?template_id=${body.templateId}`);
-    } catch (e:any) {
-      setError(String(e?.message ?? e) || "Failed to create template");
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
   return (
+    <Suspense fallback={<div className="p-6">Loading…</div>}>
     <div className="min-h-screen bg-gray-50">
       
       <div className="flex min-h-screen">
@@ -476,8 +436,7 @@ const fetchCommunity = async (opts: { reset?: boolean } = {}) => {
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow"
                 onClick={() => {
                   if (!user || isCreating) return;
-                  createNewScale();
-                  router.push("/templates/new");
+                  router.push("/templatebuilder?mode=new")
                 }}
                 disabled={!user || isCreating}
               >
@@ -488,5 +447,6 @@ const fetchCommunity = async (opts: { reset?: boolean } = {}) => {
         </div>
       </div>
     </div>
+    </Suspense>
   );
 }

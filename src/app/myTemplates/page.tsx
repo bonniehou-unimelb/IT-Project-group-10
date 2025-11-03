@@ -9,7 +9,7 @@ import { SearchBar } from '../components/searchbar';
 import { useAuth } from "../authentication/auth";
 import React from "react";
 
-const API_BACKEND_URL = "http://localhost:8000";
+const API_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 export type TemplateSummary = {
   templateId: number;

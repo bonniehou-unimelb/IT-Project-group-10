@@ -130,3 +130,4 @@ SESSION_COOKIE_SECURE = True  # required for HTTPS
 SESSION_COOKIE_SAMESITE = "None"  # allow cross-site cookies
 CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = False

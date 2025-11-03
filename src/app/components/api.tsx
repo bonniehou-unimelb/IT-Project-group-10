@@ -187,28 +187,42 @@ export type NewItem = {
 
 
 export function addTemplateItemAction(templateId: number) {
-  const csrftoken = Cookies.get("csrftoken");
-  console.log(csrftoken);
-  console.log(getCookie("csrftoken"));
-  return (item: NewItem): Promise<void> => {
-    return fetch(`${API_BACKEND_URL}/templateitem/update/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrftoken ?? "",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      credentials: "include",
-      body: JSON.stringify({ templateId, ...item }),
-    })
-      .then(async (res) => {
-        const body = await parseJSON<{ success?: boolean; error?: string }>(res);
-        console.log(body);
+  return async (item: NewItem): Promise<void> => {
+    try {
+      // Try to get the CSRF token from cookies
+      let csrftoken = Cookies.get("csrftoken");
 
-        if (!res.ok || !body?.success) {
-          throw new Error(body?.error ?? `HTTP ${res.status}`);
-        }
+      // If no CSRF token found, fetch it from backend
+      if (!csrftoken) {
+        console.warn("CSRF token missing — fetching new token from backend...");
+        await fetch(`${API_BACKEND_URL}/token/`, { credentials: "include" });
+        csrftoken = Cookies.get("csrftoken");
+      }
+
+      console.log("Using CSRF token:", csrftoken);
+
+      // Proceed with POST request
+      const res = await fetch(`${API_BACKEND_URL}/templateitem/update/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrftoken ? { "X-CSRFToken": csrftoken } : {}),
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "include",
+        body: JSON.stringify({ templateId, ...item }),
       });
+
+      const body = await res.json().catch(() => ({}));
+      console.log("TemplateItem update response:", body);
+
+      if (!res.ok || !body?.success) {
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+    } catch (err) {
+      console.error("Error adding template item:", err);
+      throw err;
+    }
   };
 }
 

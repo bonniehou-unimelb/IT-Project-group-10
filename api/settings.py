@@ -74,6 +74,8 @@ if FRONTEND_URL:
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.onrender.com",
+    "https://it-project-group-10.vercel.app",
+    "https://it-project-group-10-git-deployment-winstons-projects-da2d3941.vercel.app",
 ]
 
 if FRONTEND_URL:

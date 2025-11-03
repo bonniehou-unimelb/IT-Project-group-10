@@ -189,6 +189,7 @@ export type NewItem = {
 export function addTemplateItemAction(templateId: number) {
   const csrftoken = Cookies.get("csrftoken");
   console.log(csrftoken);
+  console.log(getCookie("csrftoken"));
   return (item: NewItem): Promise<void> => {
     return fetch(`${API_BACKEND_URL}/templateitem/update/`, {
       method: "POST",

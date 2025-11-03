@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import Cookies from "js-cookie";
 
 const API_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL!;
 
@@ -150,7 +151,7 @@ export function createOrUpdateTemplateAction(
       isTemplate: form.isTemplate,
     };
 
-    const csrftoken = getCookie("csrftoken");
+    const csrftoken = Cookies.get("csrftoken");
     fetch(`${API_BACKEND_URL}/template/update/`, {
       method: "POST",
       headers: {
@@ -185,7 +186,7 @@ export type NewItem = {
 
 
 export function addTemplateItemAction(templateId: number) {
-  const csrftoken = getCookie("csrftoken");
+  const csrftoken = Cookies.get("csrftoken");
   return (item: NewItem): Promise<void> => {
     return fetch(`${API_BACKEND_URL}/templateitem/update/`, {
       method: "POST",

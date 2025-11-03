@@ -21,4 +21,4 @@ python scripts/watch_db.py &
 
 # Step 5: Launch the Django app
 echo "Starting Gunicorn..."
-gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT
+gunicorn api.wsgi:application --bind 0.0.0.0:$PORT

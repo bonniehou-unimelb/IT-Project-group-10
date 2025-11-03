@@ -63,7 +63,7 @@ WSGI_APPLICATION = "api.wsgi.application"
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://it-project-group-10.onrender.com",
+    "https://it-project-group-10.vercel.app",
 ]
 
 # Add Vercel frontend once ready e.g.

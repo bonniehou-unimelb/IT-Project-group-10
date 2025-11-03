@@ -137,41 +137,55 @@ export function createOrUpdateTemplateAction(
   onSuccess: (result: { templateId: number; version: number }) => void,
   onError: (msg: string) => void
 ) {
-  return (form: NewVersionForm) => {
-    const payload = {
-      username,
-      name: form.name,
-      subjectCode: form.subjectCode ,
-      year: form.year,
-      semester: form.semester ,
-      version: form.version,
-      scope: form.scope,
-      description: form.description,
-      isPublishable: form.isPublishable,
-      isTemplate: form.isTemplate,
-    };
+  return async (form: NewVersionForm) => {
+    try {
+      const payload = {
+        username,
+        name: form.name,
+        subjectCode: form.subjectCode,
+        year: form.year,
+        semester: form.semester,
+        version: form.version,
+        scope: form.scope,
+        description: form.description,
+        isPublishable: form.isPublishable,
+        isTemplate: form.isTemplate,
+      };
 
-    const csrftoken = Cookies.get("csrftoken");
-    console.log(csrftoken);
-    fetch(`${API_BACKEND_URL}/template/update/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrftoken ?? "",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
-      .then(async (res) => {
-        const body = await parseJSON<{ success?: boolean; templateId?: number; version?: number; error?: string }>(res);
-        if (body?.templateId && body?.version) {
-          onSuccess({ templateId: body.templateId, version: body.version });
-        } else {
-          onError(body?.error ?? "Failed to create/update template");
-        }
-      })
-      .catch((e) => onError(String(e?.message ?? e)));
+      // 1️⃣ Fetch CSRF token if not present
+      let csrftoken = Cookies.get("csrftoken");
+      if (!csrftoken) {
+        await fetch(`${API_BACKEND_URL}/token/`, {
+          method: "GET",
+          credentials: "include",
+        });
+        csrftoken = Cookies.get("csrftoken");
+      }
+
+      console.log("Using CSRF token:", csrftoken);
+
+      // 2️⃣ Make POST request
+      const res = await fetch(`${API_BACKEND_URL}/template/update/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrftoken ? { "X-CSRFToken": csrftoken } : {}),
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const body = await res.json().catch(() => ({}));
+
+      if (body?.templateId && body?.version) {
+        onSuccess({ templateId: body.templateId, version: body.version });
+      } else {
+        onError(body?.error ?? "Failed to create/update template");
+      }
+    } catch (err: any) {
+      onError(err?.message ?? "Unknown error");
+    }
   };
 }
 
@@ -187,30 +201,45 @@ export type NewItem = {
 
 
 export function addTemplateItemAction(templateId: number) {
-  const csrftoken = Cookies.get("csrftoken");
-  // console.log(csrftoken);
-  console.log(getCookie("csrftoken"));
-  return (item: NewItem): Promise<void> => {
-    return fetch(`${API_BACKEND_URL}/templateitem/update/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrftoken ?? "",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      credentials: "include",
-      body: JSON.stringify({ templateId, ...item }),
-    })
-      .then(async (res) => {
-        const body = await parseJSON<{ success?: boolean; error?: string }>(res);
-        console.log(body);
+  return async (item: NewItem): Promise<void> => {
+    try {
+      // 1️⃣ Fetch CSRF token from backend (if not already present)
+      let csrftoken = Cookies.get("csrftoken");
+      if (!csrftoken) {
+        await fetch(`${API_BACKEND_URL}/token/`, {
+          method: "GET",
+          credentials: "include", // ensures cookie is set
+        });
+        csrftoken = Cookies.get("csrftoken");
+      }
 
-        if (!res.ok || !body?.success) {
-          throw new Error(body?.error ?? `HTTP ${res.status}`);
-        }
+      console.log("Using CSRF token:", csrftoken);
+
+      // 2️⃣ Make POST request
+      const res = await fetch(`${API_BACKEND_URL}/templateitem/update/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrftoken ? { "X-CSRFToken": csrftoken } : {}),
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "include",
+        body: JSON.stringify({ templateId, ...item }),
       });
+
+      const body = await res.json().catch(() => ({}));
+      console.log("TemplateItem update response:", body);
+
+      if (!res.ok || !body?.success) {
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+    } catch (err) {
+      console.error("Error adding template item:", err);
+      throw err;
+    }
   };
 }
+
 
 
 export function deleteTemplateAction(

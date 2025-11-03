@@ -93,20 +93,6 @@ export default function AIGuidelinesBuilder() {
   return () => window.removeEventListener("beforeunload", handler);
 }, [dirty]);
   
-  // Reroute to new template once new version saved
-  useEffect(() => {
-    if (!templateId) return;
-    // build new url with the updated template id
-    const params = new URLSearchParams(Array.from(searchParams.entries()));
-    params.set("template_id", String(templateId));
-
-    const nextUrl = `${pathname}?${params.toString()}`;
-    window.location.assign(nextUrl);
-    console.log("[reroute] ->", nextUrl);
-    router.replace(nextUrl);
-  }, [templateId]);
-    
-
   const payloadName = payload?.name ?? null;
   const payloadSubject = payload?.subject ?? null;
 
@@ -219,11 +205,12 @@ export default function AIGuidelinesBuilder() {
 
       open(tid);
 
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
-      params.set("template_id", String(tid));
-      const nextUrl = `${pathname}?${params.toString()}`;
-
-      router.replace(nextUrl);
+      const currentId = searchParams.get("template_id");
+      if (String(tid) !== (currentId ?? "")) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("template_id", String(tid));
+        router.replace(`${pathname}?${params.toString()}`);
+      }
     } catch (e) {
       console.error("Failed to switch version:", e);
     }
@@ -234,37 +221,37 @@ export default function AIGuidelinesBuilder() {
     {
       id: '1',
       task: '',
-      aiUseScaleLevel_name: 'No AI Use Permitted',
-      instructions: 'The assessment is completed entirely without AI assistance. This level ensures that students rely solely on their knowledge, understanding, and skills. AI must not be used at any point during the assessment',
-      examples: 'Traditional exams, in-class essays, mathematical problem-solving without computational aids, original creative writing',
-      aiGeneratedContent: 'Add details here…',
+      aiUseScaleLevel_name: '',
+      instructions: '',
+      examples: '',
+      aiGeneratedContent: '',
       acknowledgement: true,
     },
     {
       id: '2',
       task: '',
-      aiUseScaleLevel_name: 'AI for Research & Brainstorming Only',
-      instructions: 'You may use AI tools for initial research, topic exploration, and brainstorming ideas. However, all analysis, writing, and final work must be your own.',
-      examples: 'Using ChatGPT to understand complex topics, generating research questions, exploring different perspectives on a subject',
-      aiGeneratedContent: 'Add details here…',
+      aiUseScaleLevel_name: '',
+      instructions: '',
+      examples: '',
+      aiGeneratedContent: '',
       acknowledgement: true,
     },
     {
       id: '3',
       task: '',
-      aiUseScaleLevel_name: 'AI as Writing Assistant',
-      instructions: 'AI tools may be used to assist with writing tasks such as grammar checking, style suggestions, and structural feedback. The core ideas and arguments must be your own.',
-      examples: 'Using Grammarly for editing, ChatGPT for feedback on draft structure, AI tools for citation formatting',
-      aiGeneratedContent: 'Add details here…',
+      aiUseScaleLevel_name: '',
+      instructions: '',
+      examples: '',
+      aiGeneratedContent: '',
       acknowledgement: true,
     },
     {
       id: '4',
       task: '',
-      aiUseScaleLevel_name: 'Collaborative AI Use Encouraged',
-      instructions: 'AI tools are encouraged as collaborative partners. You may use AI for research, drafting, analysis, and refinement while demonstrating critical evaluation of AI outputs.',
-      examples: 'Co-writing with AI, using AI for data analysis, AI-assisted coding projects, collaborative problem-solving with AI',
-      aiGeneratedContent: 'Add details here…',
+      aiUseScaleLevel_name: '',
+      instructions: '',
+      examples: '',
+      aiGeneratedContent: '',
       acknowledgement: true,
     },
   ]);
@@ -453,9 +440,12 @@ export default function AIGuidelinesBuilder() {
             }
 
             // Updating URL (stay on builder) so a manual refresh loads the saved template
-            const params = new URLSearchParams(searchParams.toString());
-            params.set("template_id", String(newId));
-            router.replace(`${pathname}?${params.toString()}`);
+            const currentId = searchParams.get("template_id");
+            if (String(newId) !== (currentId ?? "")) {
+              const params = new URLSearchParams(searchParams.toString());
+              params.set("template_id", String(newId));
+              router.replace(`${pathname}?${params.toString()}`);
+            }
 
             setDirty(false);
             resolve();

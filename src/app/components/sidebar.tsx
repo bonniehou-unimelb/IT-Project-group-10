@@ -35,7 +35,7 @@ function SideBar() {
                     My Templates
                 </button>
 
-                {/* Buttont that takes you to the community tempaltes page */}
+                {/* Buttons that takes you to the community tempaltes page */}
                 <button 
                     className="w-full text-left px-6 py-3 hover:bg-blue-950"
                     onClick={() => router.push("/communityTemplates")}

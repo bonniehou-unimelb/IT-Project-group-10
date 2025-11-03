@@ -3,7 +3,7 @@ import { Button } from './button';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { ScrollArea } from './scroll-area';
 import { Badge } from './badge';
-import { ArrowRight, Copy } from 'lucide-react';
+import { Copy } from 'lucide-react';
 
 interface AIUseLevel {
   id: string;
@@ -35,27 +35,27 @@ export default function AITemplateRepository({ onSelectTemplate }: AITemplateRep
       levels: [
         {
         label: 'No AI Use Permitted',
-        instructions: 'The assessment is completeted entirely without AI assistance. This level ensures that students rely solely on their knowledge, understanding, and skills. AI must not be used at any point during the assessment',
-        examples: 'example placeholder',
-        acknowledgement: 'Students MUST acknowledge the use of AI by adding a declaration at the end of their submission.'
+        instructions: 'The assessment is completeted entirely without AI assistance. This level ensures that students rely solely on their knowledge, understanding, and skills. AI must not be used at any point during the assessment.',
+        examples: 'Traditional exams, in-class essays, mathematical problem-solving without computational aids, original creative writing.',
+        acknowledgement: ''
       },
       {
         label: 'AI for Research & Brainstorming Only',
-        instructions: 'instructions placeholder',
-        examples: 'example placholder',
-        acknowledgement: 'Students MUST acknowledge the use of AI by adding a declaration at the end of their submission..'
+        instructions: 'instructions You may use AI tools for initial research, topic exploration, and brainstorming ideas. However, all analysis, writing, and final work must be your own.',
+        examples: 'Using ChatGPT to understand complex topics, generating research questions, exploring different perspectives on a subject.',
+        acknowledgement: ''
       },
       {
         label: 'AI as Writing Assistant',
-        instructions: 'instructions placeholder',
-        examples: 'example placeholder',
-        acknowledgement: 'Students MUST (a) cite and reference AI output that is either paraphrased or directly quoted in their submission, and (b) acknowledge the use of AI by adding a declaration at the end of their submission.'
+        instructions: 'AI tools may be used to assist with writing tasks such as grammar checking, style suggestions, and structural feedback. The core ideas and arguments must be your own.',
+        examples: 'Using Grammarly for editing, ChatGPT for feedback on draft structure, AI tools for citation formatting.',
+        acknowledgement: ''
       },
       {
         label: 'Collaborative AI Use Encouraged',
-        instructions: 'instructions placeholder',
-        examples: 'example placeholder',
-        acknowledgement: 'Students MUST (a) cite and reference AI output that is either paraphrased or directly quoted in their submission, and (b) acknowledge the use of AI by adding a declaration at the end of their submission.'
+        instructions: 'AI tools are encouraged as collaborative partners. You may use AI for research, drafting, analysis, and refinement while demonstrating critical evaluation of AI outputs.',
+        examples: 'Co-writing with AI, using AI for data analysis, AI-assisted coding projects, collaborative problem-solving with AI.',
+        acknowledgement: ''
       }
         ]
     },

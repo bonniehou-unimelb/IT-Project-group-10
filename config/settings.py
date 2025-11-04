@@ -8,7 +8,6 @@ from rest_framework import status
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 
-
 def index(request):
     return HttpResponse("Hello. You're at the ai scale app index.")
 

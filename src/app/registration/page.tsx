@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-const API_BACKEND_URL = "http://localhost:8000";
+const API_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 // setup user session cookie 
 function getCookie(name: string) {

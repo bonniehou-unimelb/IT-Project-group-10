@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from '../components/alert-dialog';
 
-const API_BACKEND_URL = "http://localhost:8000";
+const API_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 export type TemplateSummary = {
   templateId: number;

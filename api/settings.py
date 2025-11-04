@@ -124,9 +124,18 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-SESSION_COOKIE_SECURE = True  # required for HTTPS
-SESSION_COOKIE_SAMESITE = "None"  # allow cross-site cookies
-CSRF_COOKIE_SAMESITE = "None"
+# Session & CSRF Cookie Settings
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_HTTPONLY = True  # Change to True for security
+SESSION_COOKIE_DOMAIN = None  # Let browser handle it
+
 CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_HTTPONLY = False  # Must be False so JS can read it
+CSRF_COOKIE_DOMAIN = None  # Let browser handle it
 CSRF_USE_SESSIONS = False
+
+# IMPORTANT: Add this
+SESSION_COOKIE_NAME = "sessionid"
+CSRF_COOKIE_NAME = "csrftoken"

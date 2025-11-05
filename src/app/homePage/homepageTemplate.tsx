@@ -16,7 +16,7 @@ import SystemOverview from "../components/SystemOverview"
 import RecentActivity from "../components/RecentActivity"
 
 
-const API_BACKEND_URL = "http://localhost:8000";
+const API_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 
 import { 

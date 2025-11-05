@@ -116,7 +116,7 @@ export default function AIGuidelinesBuilder() {
         if (payloadSubject?.semester != null) q.set("semester", String(payloadSubject.semester));
         if (payloadSubject?.year != null) q.set("year", String(payloadSubject.year));
 
-        const res = await fetch(`http://localhost:8000/api/templates/versions/?${q.toString()}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BACKEND_URL}/api/templates/versions/?${q.toString()}`, {
           credentials: "include",
           signal: controller.signal,
         });
